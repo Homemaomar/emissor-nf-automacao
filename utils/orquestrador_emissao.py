@@ -202,7 +202,7 @@ class OrquestradorEmissao:
                     "smtp_host": "smtp.gmail.com",
                     "smtp_port": 587,
                     "smtp_user": "mbs.busiines@gmail.com",
-                    "smtp_password": "gzyqiwdufiwmxxal",
+                    smtp_password = os.getenv("SMTP_PASSWORD"),
                     "remetente_nome": "Setor Fiscal",
                     "use_tls": True
                 }
