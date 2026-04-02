@@ -1,0 +1,874 @@
+<html><head>
+    <meta name="viewport" content="width=device-width">
+    <title>NFS-e | Portal Contribuinte</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <link href="/EmissorNacional/Content/Base?v=PNNgqFMeiX_JCCYDv-3Z3MCHsfnKA_V8oEHE8c3GJic1" rel="stylesheet">
+
+    
+    <link href="/EmissorNacional/Content/Passos?v=h9LYsnO-1oEZh2yqdueeg3K5lLMDMIKYutNGSwsplYc1" rel="stylesheet">
+
+
+    <script type="text/javascript">
+        window.UrlBase = "https://www.nfse.gov.br/emissornacional/";
+        window.UrlRest = "https://restnfseprod.srv.cd.serpro";
+        window.sessionStorage.setItem("accessToken", 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRobWV0aG9kIjoiU0VOSEEiLCJ1bmlxdWVfbmFtZSI6IiIsImluc2NyaWNhbyI6IjA0NDk0MTA2MDAwMTQwIiwidGlwb19pbnNjcmljYW8iOiJDTlBKIiwibm9tZSI6IiIsInJvbGUiOiJDT05UUklCVUlOVEUiLCJuYmYiOjE3NzQxODUxNjcsImV4cCI6MTc3NDI3NTE2NywiaWF0IjoxNzc0MTg1MTY3LCJpc3MiOiJodHRwOi8vd3d3LnNlcnByby5nb3YuYnIifQ.UCUpTJfhcazxKibBOw-5St7d_qwWy32XcYrsWx_fFZA');
+    </script>
+    <script src="/EmissorNacional/Scripts/Base?v=9aYlZCGNwOnQ9M-uWKF6qWROrguA9sBYeGWayB9cXLg1"></script><style type="text/css">.dropdown-submenu:hover>.dropdown-menu{display:none}</style>
+
+    
+        <script type="text/javascript">
+            var regEspContrib = 0;
+        </script>
+
+
+    <script type="text/javascript">
+        var codMunEmi = 2600104;
+        var codMunIncidencia = 2600104;
+        var dataCompetencia = "2026-03-22";
+        var haMaisDeUmRegime = true;
+        var optanteSimplesNacional = false;
+        var regApuTribSN = 0;
+        var usuarioMei = false;
+        var haIsencaoPorBM = false;
+        var podeAlterarDeducao = true;
+        var podeAlterarRetencao = true;
+        var ehExportacao = false;
+        var munIncidConveniado = true;
+        var ehNfseSubstituicao = false;
+    </script>
+
+    <script src="/EmissorNacional/Scripts/Tributacao?v=526yVLB42FFejP6uVp_826UPZa7rjZxvYcmYYN3gFq01"></script>
+
+    <script src="/EmissorNacional/Scripts/Deducao?v=2ZQ4ur4jpPjPFam1qUaeKiK9Qy_zIp84Sd1SWa6yGZ01"></script>
+
+
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-static-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <div class="navbar-brand completa">
+                    <a href="/EmissorNacional/"><img src="/EmissorNacional/img/logo-nfse-assinatura-horizontal.svg"></a>
+                </div>
+                <div class="navbar-brand simples">
+                    <a href="/EmissorNacional/"><img src="/EmissorNacional/img/logo-header-simples.svg"></a>
+                </div>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/EmissorNacional/" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Principal"><div><img src="/EmissorNacional/img/menu-home-35.svg"></div><span class="nome-mobile">Página Principal</span></a>
+                    </li>
+                    
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img src="/EmissorNacional/img/menu-nova-35.svg"><span class="caret"></span></div><span class="nome-mobile">Nova NFS-e</span>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header titulo-menu">Tipos de emissão:</li>
+                            <li>
+                                <a href="/EmissorNacional/DPS/Pessoas">Emissão completa</a>
+                            </li>
+                            <li>
+                                <a href="/EmissorNacional/DPS/Simplificada">Emissão simplificada</a>
+                            </li>
+                            <li>
+                                <a href="/EmissorNacional/ByPass/Pessoas">Emissão por decisão administrativa/judicial</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Emitidas" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="NFS-e Emitidas"><div><img src="/EmissorNacional/img/menu-emitidas-35.svg" style="top: -10px;"></div><span class="nome-mobile">NFS-e Emitidas</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Recebidas" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="NFS-e Recebidas"><div><img src="/EmissorNacional/img/menu-recebidas-35.svg"></div><span class="nome-mobile">NFS-e Recebidas</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Rascunhos" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Rascunhos"><div><img src="/EmissorNacional/img/menu-rascunhos-35.svg"></div><span class="nome-mobile">Rascunhos</span></a>
+                    </li>
+
+                    <!-- MAN desabilitado em Produção Restrita
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                           role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img src="~/img/menu-apuracao-35.svg" /><span class="caret"></span></div><span class="nome-mobile">Apuração Nacional</span>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header titulo-menu">Apuração Nacional:</li>
+                            <li>
+                                <a href="">Pré-Apuração</a>
+                            </li>
+                            <li>
+                                <a href="">Apuração</a>
+                            </li>
+                            <li>
+                                <a href="">Arrecadação</a>
+                            </li>
+                            <li>
+                                <a href="">Créditos/Débitos</a>
+                            </li>
+                        </ul>
+                    </li>
+                    -->
+
+                    <li>
+                        <a href="/EmissorNacional/Perfil/Configuracao" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Configurações"><div><img src="/EmissorNacional/img/menu-config-35.svg"></div><span class="nome-mobile">Configurações</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Perfil/ServicosFavoritos" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Serviços Favoritos"><div><img src="/EmissorNacional/img/menu-favoritos-35.svg" style="top: -2px;"></div><span class="nome-mobile">Serviços Favoritos</span></a>
+                    </li>
+                    <li class="divisor"></li>
+                    <li class="dropdown perfil">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img style="top: 2px" src="/EmissorNacional/img/menu-user-35.svg"><span class="caret"></span></div>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header">
+                                B P M SERVICOS LTDA<br>
+                                    <span>CNPJ: </span><span class="cnpj">04.494.106/0001-40</span><br>
+                            </li>
+                            <li><a href="/EmissorNacional/Login/Sair">Sair com segurança</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <nav class="navbar navbar-default navbar-breadcrumbs">
+        <div class="container">
+            <div class="breadcrumbs">
+    <span class="nome-sistema">
+        <a href="/EmissorNacional/">
+            <i class="fa fa-home"></i>Home
+        </a>
+    </span>
+                <span class="separador">::</span>
+
+        <a href="/EmissorNacional/DPS/Pessoas/NovaNFSe" title="Emissão Completa">Emissão Completa</a>
+            <span class="separador">::</span>
+
+    Tributação
+</div>
+        </div>
+    </nav>
+
+    <div class="container container-fluid-xl container-body">
+        
+
+
+
+<div class="wizard">
+    <div class="wizard-inner">
+        <div class="connecting-line"></div>
+        <ul class="nav nav-tabs" role="tablist">
+                    <li class="aberto">
+                        <a href="/EmissorNacional/DPS/Pessoas?idr=UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090">
+                            <span class="round-tab">
+                                <img class="passos-pessoas" src="/EmissorNacional/img/passos-pessoas-aberto-ico.svg">
+                            </span>
+                        </a>
+                        <a href="/EmissorNacional/DPS/Pessoas?idr=UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090" class="tag">
+                            <span class="tag-text">Pessoas</span>
+                        </a>
+                    </li>
+                    <li class="aberto">
+                        <a href="/EmissorNacional/DPS/Servico?idr=UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090">
+                            <span class="round-tab">
+                                <img class="passos-servico" src="/EmissorNacional/img/passos-servico-aberto-ico.svg">
+                            </span>
+                        </a>
+                        <a href="/EmissorNacional/DPS/Servico?idr=UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090" class="tag">
+                            <span class="tag-text">Serviço</span>
+                        </a>
+                    </li>
+                    <li class="ativo">
+                        <a href="javascript:void(0);">
+                            <span class="round-tab">
+                                <img class="passos-valores" src="/EmissorNacional/img/passos-valores-ativo-ico.svg">
+                            </span>
+                        </a>
+                        <a href="javascript:void(0);" class="tag">
+                            <span class="tag-text">Valores</span>
+                        </a>
+                    </li>
+                    <li class="fechado">
+                        <a href="javascript:void(0);">
+                            <span class="round-tab">
+                                <img class="passos-nfse" src="/EmissorNacional/img/passos-nfse-fechado-ico.svg">
+                            </span>
+                        </a>
+                        <a href="javascript:void(0);" class="tag">
+                            <span class="tag-text">Emitir NFS-e</span>
+                        </a>
+                    </li>
+
+        </ul>
+    </div>
+</div>
+
+
+
+<form action="/EmissorNacional/DPS/Tributacao?idr=UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090" class="formdps" method="post">    <input type="hidden" id="hdfIdr" value="UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090">
+    <input type="hidden" id="AliquotaParametrizada" value="5,00">
+    <input type="hidden" id="AliquotaAplicada" value="5,00">
+    <input type="hidden" id="DataCompetencia" value="2026-03-22">
+    <input type="hidden" id="CodMunIncidencia" value="2600104">
+    <input type="hidden" id="IdConvenioIncidencia" value="2752">
+    <input type="hidden" id="CodCompletoServico" value="14.01.01.000">
+    <input type="hidden" id="TipoInscricaoEmitente" value="2">
+    <input type="hidden" id="InscricaoEmitente" value="04494106000140">
+    <input type="hidden" id="InscricaoTomador" value="11.350.659/0001-94">
+    <input type="hidden" id="InscricaoIntermediario">
+    <input type="hidden" id="CodigoSubitem" value="14.01.01">
+    <input type="hidden" id="hdfMunicipioConveniado" value="value">
+    <input type="hidden" id="hdfPercentalMaximoDescontoBCPorBM" value="0">
+    <input type="hidden" id="hdfNivelInfoTomador" value="2">
+    <input type="hidden" id="hdfNivelInfoIntermediario" value="0">
+    <input type="hidden" id="MensagemBaseCalculoMenorPermitido" value="O ISSQN não pode ser objeto de redução de base de cálculo que resulte em carga tributária menor que a decorrente da aplicação da alíquota mínima de 2,0% do valor do serviço, exceto para os serviços a que se referem aos subitens 042201, 042301, 050901, 070201, 070202, 070501, 070502, 090201, 090202, 100101, 100102, 100103, 100104, 100105, 100201, 100202, 100301, 100401, 100402, 100403, 100501, 100502, 100601, 100701, 100801, 100901, 101001, 150101, 150102, 150103, 150104, 150105, 151001, 151002, 151003, 151004, 151005, 160101, 160102, 160103, 160104, 160201, 170501, 170601, 171001, 171002, 171101, 171102, 171201, 210101, 250301, da lista de serviços nacional do Sistema Nacional NFS-e.">
+    <input type="hidden" id="MensagemValorServico" value="O valor do serviço deve ser maior ou igual ao somatório dos valores informados para Desconto Incondicionado, Desconto Condicionado, Deduções/Reduções, Benefício Municipal, valores de tributos devidos (CP, IRRF, CSLL), e valores dos tributos se retidos (PIS, COFINS, ISSQN).">
+    <input type="hidden" id="MensagemValorServicoMenorSomatorioDiDedRedBm" value="O valor do serviço deve ser maior ou igual ao somatório dos valores informados para Desconto Incondicionado, Deduções/Reduções e Benefício Municipal.">
+    <input type="hidden" id="hdfEhObraSinac" value="false">
+    <input type="hidden" id="hdfEhSitEspecialDedReceitaBrutaSinac" value="false">
+<input id="ISSQN_RegimeEspecialParametrizado" name="ISSQN.RegimeEspecialParametrizado" type="hidden" value="NENHUM"><input data-val="true" data-val-required="The AliquotaDeveSerInformada field is required." id="ISSQN_AliquotaDeveSerInformada" name="ISSQN.AliquotaDeveSerInformada" type="hidden" value="False"><input id="ISSQN_TipoImunidade" name="ISSQN.TipoImunidade" type="hidden" value="">    <div id="pnlValores" class="pnlCollapse">
+        <h2>Valores do serviço prestado</h2>
+        <div class="retratil">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>Valor do serviço prestado<span class="asterisco">*</span></span><a class="" data-content="Valor total cobrado pelo serviço prestado." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <div class="input-group"><span class="input-group-addon sem-borda-direita ">R$</span><input class="form-control monetario sem-borda-esquerda aceita-zero" data-val="true" data-val-number="O campo Valor do serviço prestado deve ser um número." id="Valores_ValorServico" inputmode="numeric" maxlength="22" name="Valores.ValorServico" type="text" value=""></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Valores.ValorServico" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>Valor recebido pelo intermediário</span><a class="" data-content="Valor total recebido pelo intermediário." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <div class="input-group"><span class="input-group-addon sem-borda-direita blocked">R$</span><input class="form-control monetario sem-borda-esquerda aceita-zero" data-val="true" data-val-number="O campo Valor recebido pelo intermediário deve ser um número." id="Valores_ValorRecebidoIntermediario" inputmode="numeric" maxlength="22" name="Valores.ValorRecebidoIntermediario" readonly="readonly" type="text" value=""></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Valores.ValorRecebidoIntermediario" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>Desconto incondicionado</span><a class="" data-content="Desconto oferecido sem que haja necessidade de alguma condição seja cumprida para obtenção do desconto. O desconto incondicionado, concedido por vontade do prestador sem qualquer imposição, reduzirá o valor do serviço prestado." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <div class="input-group"><span class="input-group-addon sem-borda-direita">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo Desconto incondicionado deve ser um número." id="Valores_ValorDescontoIncondicionado" inputmode="numeric" maxlength="22" name="Valores.ValorDescontoIncondicionado" type="text" value=""></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Valores.ValorDescontoIncondicionado" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>Desconto condicionado</span><a class="" data-content="Desconto oferecido desde que alguma condição seja cumprida para obtenção do desconto. O desconto condicionado, depende de alguma condição posterior à emissão da NFS-e. A base de cálculo não é reduzida pelo desconto condicionado." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <div class="input-group"><span class="input-group-addon sem-borda-direita">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo Desconto condicionado deve ser um número." id="Valores_ValorDescontoCondicionado" inputmode="numeric" maxlength="22" name="Valores.ValorDescontoCondicionado" type="text" value=""></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Valores.ValorDescontoCondicionado" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="pnlTribMun" class="pnlCollapse">
+        <h2>Tributação Municipal</h2>
+        <div class="retratil">
+            <div class="row">
+                <div class="col-sm-12 col-md-6">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>Tributação do ISSQN sobre o serviço prestado</span></label>
+                        <select class="form-control form-chosen" id="ISSQN_TributacaoISSQN" name="ISSQN.TributacaoISSQN" readonly="readonly" style="display: none;"><option value="">Selecione...</option>
+<option selected="selected" value="1">Operação Tributável</option>
+<option value="2">Imunidade</option>
+<option value="3">Exportação de Serviço</option>
+<option value="4">Não incidência</option>
+</select><div class="chosen-container chosen-container-single chosen-container-single-nosearch chosen-disabled" style="width: 100%;" title="" id="ISSQN_TributacaoISSQN_chosen"><a class="chosen-single" tabindex="-1"><span>Operação Tributável</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly="" disabled=""></div><ul class="chosen-results"></ul></div></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.TributacaoISSQN" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="col-sm-12 col-md-6">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>Regime Especial de Tributação<span class="asterisco">*</span></span><a class="" data-content="Regime de Tributração diferenciado não necessariamente relacionado ao valor do serviço" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <select class="form-control form-chosen" id="ISSQN_RegimeEspecial" name="ISSQN.RegimeEspecial" style="display: none;"><option value="">Selecione...</option>
+<option selected="selected" value="0">Nenhum</option>
+<option value="1">Ato Cooperado</option>
+<option value="2">Estimativa</option>
+<option value="3">Microempresa Municipal</option>
+<option value="4">Notário ou Registrador</option>
+<option value="5">Profissional Autônomo</option>
+<option value="6">Sociedade de Profissionais</option>
+</select><div class="chosen-container chosen-container-single chosen-container-single-nosearch" style="width: 100%;" title="" id="ISSQN_RegimeEspecial_chosen"><a class="chosen-single" tabindex="-1"><span>Nenhum</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly=""></div><ul class="chosen-results"></ul></div></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.RegimeEspecial" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pnlOperacaoTributavel">
+                <hr>
+                <div class="form-group form-group-lg" style="padding-top: 10px;">
+                    <label class="control-label"><span>A exigibilidade do recolhimento do ISSQN devido nesta operação está suspensa?<span class="asterisco">*</span></span></label>
+                    <div class="radio-options">
+                        <div class="inline-block">
+                            <div class="radiobutton "><label><input id="ISSQN_HaSuspensao" name="ISSQN.HaSuspensao" type="radio" value="0">Não<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                        <div>
+                            <div class="radiobutton "><label><input id="ISSQN_HaSuspensao" name="ISSQN.HaSuspensao" type="radio" value="1">Sim<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                    </div>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.HaSuspensao" data-valmsg-replace="true"></span>
+                </div>
+                <div id="pnlSuspensao" class="row" style="display:none;">
+                    <div class="col-md-6">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Tipo de suspensão<span class="asterisco">*</span></span></label>
+                            <select class="form-control form-chosen" id="ISSQN_TipoSuspensaoISSQN" name="ISSQN.TipoSuspensaoISSQN" selected="selected" style="display: none;"><option value="">Selecione...</option>
+<option value="1">Exigibilidade Suspensa por decisão judicial</option>
+<option value="2">Exigibilidade Suspensa por processo administrativo</option>
+</select><div class="chosen-container chosen-container-single chosen-container-single-nosearch" style="width: 100%;" title="" id="ISSQN_TipoSuspensaoISSQN_chosen"><a class="chosen-single" tabindex="-1"><span>Selecione...</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly=""></div><ul class="chosen-results"></ul></div></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.TipoSuspensaoISSQN" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Número do processo<span class="asterisco">*</span></span></label>
+                            <input class="form-control num30pos" data-val="true" data-val-length="The field Número do processo must be a string with a maximum length of 30." data-val-length-max="30" id="ISSQN_NumeroProcesso" maxlength="30" name="ISSQN.NumeroProcesso" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.NumeroProcesso" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="form-group form-group-lg" style="padding-top: 10px;">
+                    <label class="control-label"><span>Há retenção do ISSQN pelo Tomador ou pelo Intermediário?<span class="asterisco">*</span></span></label>
+                        <div id="pnlRetencaoMensagem" class="bd-callout bd-callout-info" style="display:none;">
+                            
+                        </div>
+                    <div class="radio-options">
+                        <div class="inline-block">
+                            <div class="radiobutton "><label><input id="ISSQN_HaRetencao" name="ISSQN.HaRetencao" type="radio" value="0">Não<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                        <div>
+                            <div class="radiobutton "><label><input id="ISSQN_HaRetencao" name="ISSQN.HaRetencao" type="radio" value="1">Sim<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                    </div>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.HaRetencao" data-valmsg-replace="true"></span>
+                </div>
+                <div id="pnlRetencao" style="">
+                        <div class="form-group form-group-lg" style="padding-top: 10px;">
+                            <label class="control-label"><span>Informe abaixo por quem o imposto será retido<span class="asterisco">*</span></span></label>
+                            <div class="radio-options">
+                                <div class="inline-block">
+                                    <div class="radiobutton "><label><input id="ISSQN_TipoRetencao" name="ISSQN.TipoRetencao" type="radio" value="2">Retido pelo Tomador<span class="cr"><i class="cr-icon"></i></span></label></div>
+                                    <span style="padding-right: 18px">|</span>
+                                    <span id="spnTomador" style="padding-right: 15px">
+                                        11.350.659/0001-94 - MUNICIPIO DE TRIUNFO
+                                    </span>
+                                </div>
+                                <div class="inline-block">
+                                    <div class="radiobutton "><label><input id="ISSQN_TipoRetencao" name="ISSQN.TipoRetencao" type="radio" value="3">Retido pelo Intermediário<span class="cr"><i class="cr-icon"></i></span></label></div>
+                                    <span style="padding-right: 18px">|</span>
+                                    <span id="spnIntermediario" style="padding-right: 15px">
+                                        Não informado
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.TipoRetencao" data-valmsg-replace="true"></span>
+                        </div>
+
+                        <div id="pnlComandosPessoas" style="margin-bottom:15px;">
+                                <a href="javascript:void(0);" class="btn btn-lg btn-info btnAlterarPessoa" data-idr="UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090" data-tipopessoa="2">
+                                    <img src="/EmissorNacional/img/btn-editar.svg"> Editar Tomador
+                                </a>
+                                                            <a href="javascript:void(0);" class="btn btn-lg btn-info btnAlterarPessoa" data-idr="UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090" data-tipopessoa="3">
+                                    <img src="/EmissorNacional/img/btn-novo.svg"> Incluir Intermediário
+                                </a>
+                        </div>
+                </div>
+
+                <hr>
+
+                <div id="pnlAliquotaInformada" style="display:none;">
+                        <div id="pnlMsgMunicipioNaoConveniado" class="bd-callout bd-callout-info">
+                            O município de incidência do ISSQN definido para esta NFS-e é Afogados da Ingazeira/PE. Na data de competência
+                            informada (22/03/2026) este município não possui convênio com
+                            o Sistema Nacional da NFS-e. Por este motivo, a alíquota do ISSQN deve ser informada manualmente no campo abaixo.
+                        </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group form-group-lg" style="padding-top: 10px;">
+                                <label class="control-label"><span>Informe o valor da alíquota<span class="asterisco">*</span></span></label>
+                                <div class="input-group"><input class="form-control percentual" data-val="true" data-val-number="O campo Informe o valor da alíquota deve ser um número." id="ISSQN_AliquotaInformada" maxlength="6" name="ISSQN.AliquotaInformada" type="text" value=""><span class="input-group-addon sem-borda-esquerda">%</span></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.AliquotaInformada" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                </div>
+
+                <div class="form-group form-group-lg" style="padding-top: 10px;">
+                    <label class="control-label"><span>Este serviço prestado está amparado por algum benefício municipal?<span class="asterisco">*</span></span></label>
+                    <div class="radio-options">
+                        
+                        <div class="inline-block">
+                            
+                            <div class="radiobutton "><label><input id="ISSQN_HaBeneficioMunicipal" name="ISSQN.HaBeneficioMunicipal" type="radio" value="0">Não<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                        <div>
+                            
+                            <div class="radiobutton "><label><input id="ISSQN_HaBeneficioMunicipal" name="ISSQN.HaBeneficioMunicipal" type="radio" value="1">Sim<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                    </div>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.HaBeneficioMunicipal" data-valmsg-replace="true"></span>
+                </div>
+                <div id="pnlBeneficioMunicipal" style="display:none;">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>Identificação do Benefício Municipal (BM)<span class="asterisco">*</span></span><a class="" data-content="O identificador do benefício municipal consiste em um código numérico de 14 posições gerado pelo Sistema Nacional da NFS-e para identificar unicamente o benefício de um determinado município. Em caso de dúvidas sobre o preenchimento desta informação, entre em contato com a administração do município de incidência indicado." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+<select class="form-control form-chosen" data-val="true" data-val-length="The field Identificação do Benefício Municipal (BM) must be a string with a maximum length of 200." data-val-length-max="200" id="ISSQN_IdBM" name="ISSQN.IdBM" selected="selected" style="display: none;"><option value=""></option>
+</select><div class="chosen-container chosen-container-single chosen-container-single-nosearch" style="width: 100%;" title="" id="ISSQN_IdBM_chosen"><a class="chosen-single chosen-default" tabindex="-1"><span></span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly=""></div><ul class="chosen-results"></ul></div></div>                                <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.IdBM" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pnlBeneficioMunicipalValor" style="display:none;">
+                            <div class="bd-callout bd-callout-info">
+                                O valor monetário a ser informado para redução da BC do ISSQN tem previsão legal pelo benefício municipal selecionado acima.<br>
+                                Este valor deve ser inferior a R$ <span id="ISSQN_spanBaseDeCalculo"></span>, que é o valor da BC do ISSQN calculada até o momento.
+                            </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group form-group-lg">
+                                    <input data-val="true" data-val-required="The ValorMonetarioReducaoBCObrigatorio field is required." id="ISSQN_ValorMonetarioReducaoBCObrigatorio" name="ISSQN.ValorMonetarioReducaoBCObrigatorio" type="hidden" value="False">
+                                    <label class="control-label"><span>Valor para redução da BC<span class="asterisco">*</span></span></label>
+                                    <div class="input-group"><span class="input-group-addon sem-borda-direita ">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo Valor para redução da BC deve ser um número." id="ISSQN_ValorMonetarioReducaoBC" inputmode="numeric" maxlength="22" name="ISSQN.ValorMonetarioReducaoBC" type="text" value=""></div>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.ValorMonetarioReducaoBC" data-valmsg-replace="true"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pnlBeneficioMunicipalPercentual" style="display:none;">
+                        <div class="bd-callout bd-callout-info">
+                            O percentual a ser informado para redução da base de cálculo do ISSQN tem previsão legal pelo benefício municipal selecionado acima.<br>
+                            Este percentual deve ser superior a 0% e inferior ou igual a <span id="ISSQN_spanReducaoBC"></span>%, conforme indicado pelo município de incidência do ISSQN.
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group form-group-lg">
+                                    <input data-val="true" data-val-required="The ValorPercentualReducaoBCObrigatorio field is required." id="ISSQN_ValorPercentualReducaoBCObrigatorio" name="ISSQN.ValorPercentualReducaoBCObrigatorio" type="hidden" value="False">
+                                    <label class="control-label"><span>Percentual para redução da BC<span class="asterisco">*</span></span></label>
+                                    <div class="input-group"><input class="form-control percentual" data-val="true" data-val-number="O campo Percentual para redução da BC deve ser um número." id="ISSQN_ValorPercentualReducaoBC" maxlength="6" name="ISSQN.ValorPercentualReducaoBC" type="text" value=""><span class="input-group-addon sem-borda-esquerda ">%</span></div>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.ValorPercentualReducaoBC" data-valmsg-replace="true"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="form-group form-group-lg" style="padding-top: 10px;">
+                    <label class="control-label"><span>Será aplicado algum tipo de Dedução/Redução à base de cálculo do ISSQN?<span class="asterisco">*</span></span></label>
+                    <div class="radio-options">
+                        
+
+                            <div class="inline-block">
+                                
+                                <div class="radiobutton "><label><input id="ISSQN_HaDeducaoReducao" name="ISSQN.HaDeducaoReducao" type="radio" value="0">Não<span class="cr"><i class="cr-icon"></i></span></label></div>
+                            </div>
+                            <div>
+                                
+                                <div class="radiobutton "><label><input id="ISSQN_HaDeducaoReducao" name="ISSQN.HaDeducaoReducao" type="radio" value="1">Sim<span class="cr"><i class="cr-icon"></i></span></label></div>
+                            </div>
+
+                    </div>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.HaDeducaoReducao" data-valmsg-replace="true"></span>
+                </div>
+                <div id="pnlDeducaoReducao" style="display:none;">
+                    <input type="hidden" name="DeducaoReducao.TipoDeducaoReducaoObrigatorio" id="DeducaoReducao_TipoDeducaoReducaoObrigatorio" value="NAO">
+
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>Selecione abaixo um dos tipos disponíveis<span class="asterisco">*</span></span></label>
+                        <div class="radio-options">
+<div class="radiobutton "><label><input id="DeducaoReducao_TipoDeducaoReducao" name="DeducaoReducao.TipoDeducaoReducao" type="radio" value="1">Valor monetário<span class="cr"><i class="cr-icon"></i></span></label></div>                            <div class="radiobutton "><label><input id="DeducaoReducao_TipoDeducaoReducao" name="DeducaoReducao.TipoDeducaoReducao" type="radio" value="2">Valor percentual<span class="cr"><i class="cr-icon"></i></span></label></div>                                                    </div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="DeducaoReducao.TipoDeducaoReducao" data-valmsg-replace="true"></span>
+                    </div>
+                    <div id="pnlDeducaoValor" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group form-group-lg">
+                                    <label class="control-label"><span>Valor<span class="asterisco">*</span></span><a class="" data-content="Parte do valor do documento apto a ser utilizado como dedução" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                    <div class="input-group"><span class="input-group-addon sem-borda-direita ">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo Valor deve ser um número." id="DeducaoReducao_ValorMonetario" inputmode="numeric" maxlength="22" name="DeducaoReducao.ValorMonetario" type="text" value=""></div>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="DeducaoReducao.ValorMonetario" data-valmsg-replace="true"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pnlDeducaoPercentual" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group form-group-lg">
+                                    <label class="control-label"><span>Percentual<span class="asterisco">*</span></span><a class="" data-content="Percentual do valor do documento apto a ser utilizado como dedução" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                    <div class="input-group"><input class="form-control percentual" data-val="true" data-val-number="O campo Percentual deve ser um número." id="DeducaoReducao_ValorPercentual" maxlength="6" name="DeducaoReducao.ValorPercentual" type="text" value=""><span class="input-group-addon sem-borda-esquerda ">%</span></div>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="DeducaoReducao.ValorPercentual" data-valmsg-replace="true"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group form-group-lg">
+                                    <label class="control-label"><span>Valor Calculado</span><a class="" data-content="Valor monetário calculado a partir do percentual informado" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                    <div class="input-group"><span class="input-group-addon sem-borda-direita blocked">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo Valor Calculado deve ser um número." id="DeducaoReducao_ValorCalculado" inputmode="numeric" maxlength="22" name="DeducaoReducao.ValorCalculado" readonly="readonly" type="text" value=""></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pnlDeducaoDocumentos" style="display:none;">
+                        <input id="hdfIdr" type="hidden" value="UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090">
+                        <div class="bd-callout bd-callout-info">
+                            Podem ser informados os seguintes documentos: NFS-e, NF-e, Outras NFS-e, NF/NFS (modelos não eletrônicos),
+                            Outros Documentos Fiscais e Outros Documentos.
+                        </div>
+                        <button id="btnIncluirDocumentoDeducao" type="button" class="btn btn-lg btn-info">
+                            <img src="/EmissorNacional/img/btn-novo.svg"><span>Incluir Documento</span>
+                        </button>
+                        <div class="lista" style="padding-top:10px;"></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="DeducaoReducao.Documentos" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div id="pnlTribMunValores" style="padding-top: 10px;">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>Alíquota</span><a class="" data-content="Valor percentual informado na tela &quot;Serviço&quot; para o cálculo do ISSQN" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                <div class="input-group"><input class="form-control percentual" data-val="true" data-val-number="O campo Alíquota deve ser um número." id="ISSQN_Aliquota" maxlength="6" name="ISSQN.Aliquota" placeholder="-" readonly="readonly" type="text" value=""><span class="input-group-addon sem-borda-esquerda blocked">%</span></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.Aliquota" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>BC ISSQN</span><a class="" data-content="Base de Cálculo = Valor total do serviço - Valor Total das Deduções - Valor do Desconto Incondicionado" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                <div class="input-group"><span class="input-group-addon sem-borda-direita blocked">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo BC ISSQN deve ser um número." id="ISSQN_BaseDeCalculo" inputmode="numeric" maxlength="22" name="ISSQN.BaseDeCalculo" placeholder="-" readonly="readonly" type="text" value=""></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.BaseDeCalculo" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>Valor ISSQN</span><a class="" data-content="Valor do imposto a ser recolhido para pagamento ao município" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                <div class="input-group"><span class="input-group-addon sem-borda-direita blocked">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo Valor ISSQN deve ser um número." id="ISSQN_Valor" inputmode="numeric" maxlength="22" name="ISSQN.Valor" placeholder="-" readonly="readonly" type="text" value=""></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="ISSQN.Valor" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div id="pnlTributacaoFederal" class="pnlCollapse">
+        <h2>Tributação Federal</h2>
+        <div class="retratil">
+            <input data-val="true" data-val-required="The EhObrigatorio field is required." id="TributacaoFederal_PISCofins_EhObrigatorio" name="TributacaoFederal.PISCofins.EhObrigatorio" type="hidden" value="True">
+            <div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Situação Tributária do PIS/COFINS<span class="asterisco">*</span></span></label>
+                            <select class="form-control form-chosen" id="TributacaoFederal_PISCofins_SituacaoTributaria" name="TributacaoFederal.PISCofins.SituacaoTributaria" style="display: none;"><option value="">Selecione...</option>
+<option value="0">00 - Nenhum</option>
+<option value="1">01 - Operação Tributável com Alíquota Básica</option>
+<option value="2">02 - Operação Tributável com Alíquota Diferenciada</option>
+<option value="3">03 - Operação Tributável com Alíquota por Unidade de Medida de Produto</option>
+<option value="4">04 - Operação Tributável monofásica - Revenda a Alíquota Zero</option>
+<option value="5">05 - Operação Tributável por Substituição Tributária</option>
+<option value="6">06 - Operação Tributável a Alíquota Zero</option>
+<option value="7">07 - Operação Isenta da Contribuição</option>
+<option value="8">08 - Operação sem Incidência da Contribuição</option>
+<option value="9">09 - Operação com Suspensão da Contribuição</option>
+<option value="49">49 - Outras Operações de Saída</option>
+<option value="50">50 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita Tributada no Mercado Interno</option>
+<option value="51">51 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita Não-Tributada no Mercado Interno</option>
+<option value="52">52 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita de Exportação</option>
+<option value="53">53 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno</option>
+<option value="54">54 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas no Mercado Interno e de Exportação</option>
+<option value="55">55 - Operação com Direito a Crédito – Vinculada a Receitas Não Tributadas no Mercado Interno e de Exportação</option>
+<option value="56">56 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno e de Exportação</option>
+<option value="60">60 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente a Receita Tributada no Mercado Interno</option>
+<option value="61">61 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente a Receita Não-Tributada no Mercado Interno</option>
+<option value="62">62 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente a Receita de Exportação</option>
+<option value="63">63 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno</option>
+<option value="64">64 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Tributadas no Mercado Interno e de Exportação</option>
+<option value="65">65 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Não-Tributadas no Mercado Interno e de Exportação</option>
+<option value="66">66 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno e de Exportação</option>
+<option value="67">67 - Crédito Presumido – Outras Operações</option>
+<option value="70">70 - Operação de Aquisição sem Direito a Crédito</option>
+<option value="71">71 - Operação de Aquisição com Isenção</option>
+<option value="72">72 - Operação de Aquisição com Suspensão</option>
+<option value="73">73 - Operação de Aquisição a Alíquota Zero</option>
+<option value="74">74 - Operação de Aquisição sem Incidência da Contribuição</option>
+<option value="75">75 - Operação de Aquisição por Substituição Tributária</option>
+<option value="98">98 - Outras Operações de Entrada</option>
+<option value="99">99 - Outras Operações</option>
+</select><div class="chosen-container chosen-container-single" style="width: 100%;" title="" id="TributacaoFederal_PISCofins_SituacaoTributaria_chosen"><a class="chosen-single" tabindex="-1"><span>Selecione...</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off"></div><ul class="chosen-results"></ul></div></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.PISCofins.SituacaoTributaria" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="pnlPISCOFINS" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>BC PIS/COFINS</span></label>
+                                <div class="input-group"><span class="input-group-addon sem-borda-direita ">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo BC PIS/COFINS deve ser um número." id="TributacaoFederal_PISCofins_BaseDeCalculo" inputmode="numeric" maxlength="22" name="TributacaoFederal.PISCofins.BaseDeCalculo" type="text" value=""></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.PISCofins.BaseDeCalculo" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="valoresPISCOFINS" class="row">
+                        <div class="col-md-3">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>PIS - Alíquota</span></label>
+                                <div class="input-group"><input class="form-control percentual sem-borda-direita " data-val="true" data-val-number="O campo PIS - Alíquota deve ser um número." id="TributacaoFederal_PISCofins_AliquotaPIS" maxlength="6" name="TributacaoFederal.PISCofins.AliquotaPIS" type="text" value=""><span class="input-group-addon sem-borda-esquerda ">%</span></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.PISCofins.AliquotaPIS" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>PIS - Débito Apuração Própria</span><a class="" data-content="Programa de Integração Social (PIS) é uma contribuição social federal de natureza tributária, devidas pelas pessoas jurídicas, com objetivo de financiar o pagamento do seguro-desemprego, abono e participação na receita dos órgãos e entidades para os trabalhadores privados regidos pela Consolidação das Leis do Trabalho (CLT), sendo administrado pela Caixa Econômica Federal." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                <div class="input-group"><span class="input-group-addon sem-borda-direita blocked">R$</span><input class="form-control monetario sem-borda-esquerda " data-val="true" data-val-number="O campo PIS - Débito Apuração Própria deve ser um número." id="TributacaoFederal_PISCofins_ValorPIS" inputmode="numeric" maxlength="22" name="TributacaoFederal.PISCofins.ValorPIS" readonly="readonly" type="text" value=""></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.PISCofins.ValorPIS" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>COFINS - Alíquota</span></label>
+                                <div class="input-group"><input class="form-control percentual sem-borda-direita " data-val="true" data-val-number="O campo COFINS - Alíquota deve ser um número." id="TributacaoFederal_PISCofins_AliquotaCOFINS" maxlength="6" name="TributacaoFederal.PISCofins.AliquotaCOFINS" type="text" value=""><span class="input-group-addon sem-borda-esquerda ">%</span></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.PISCofins.AliquotaCOFINS" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group form-group-lg">
+                                <label class="control-label"><span>COFINS - Débito Apuração Própria</span><a class="" data-content="Contribuição para o Financiamento da Seguridade Social (COFINS) é uma contribuição social federal de natureza tributária, incidente sobre a receita bruta das empresas em geral, destinada a financiar a seguridade social, a qual abrange a previdência social, a saúde e a assistência social. O regime de apuração não cumulativa da COFINS foi instituído pela Lei nº 10.833, de 29 de dezembro de 2003." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                <div class="input-group"><span class="input-group-addon sem-borda-direita blocked">R$</span><input class="form-control monetario sem-borda-esquerda " data-val="true" data-val-number="O campo COFINS - Débito Apuração Própria deve ser um número." id="TributacaoFederal_PISCofins_ValorCOFINS" inputmode="numeric" maxlength="22" name="TributacaoFederal.PISCofins.ValorCOFINS" readonly="readonly" type="text" value=""></div>
+                                <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.PISCofins.ValorCOFINS" data-valmsg-replace="true"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group form-group-lg" style="padding-top: 10px;">
+                            <label class="control-label"><span>Tipo de retenção do PIS/COFINS/CSLL<span class="asterisco">*</span></span></label>
+                            <select class="form-control form-chosen" id="TributacaoFederal_PISCofins_TipoRetencao" name="TributacaoFederal.PISCofins.TipoRetencao" style="display: none;"><option value="">Selecione...</option>
+<option value="0">PIS/COFINS/CSLL Não Retidos</option>
+<option value="3">PIS/COFINS/CSLL Retidos</option>
+<option value="4">PIS/COFINS Retidos, CSLL Não Retido</option>
+<option value="5">PIS Retido, COFINS/CSLL Não Retido</option>
+<option value="6">COFINS Retido, PIS/CSLL Não Retido</option>
+<option value="7">PIS Não Retido, COFINS/CSLL Retidos</option>
+<option value="8">PIS/COFINS Não Retidos, CSLL Retido</option>
+<option value="9">COFINS Não Retido, PIS/CSLL Retidos</option>
+</select><div class="chosen-container chosen-container-single chosen-container-single-nosearch" style="width: 100%;" title="" id="TributacaoFederal_PISCofins_TipoRetencao_chosen"><a class="chosen-single" tabindex="-1"><span>Selecione...</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly=""></div><ul class="chosen-results"><li class="active-result result-selected" style="" data-option-array-index="0">Selecione...</li><li class="active-result" style="" data-option-array-index="1">PIS/COFINS/CSLL Não Retidos</li><li class="active-result" style="" data-option-array-index="2">PIS/COFINS/CSLL Retidos</li><li class="active-result" style="" data-option-array-index="3">PIS/COFINS Retidos, CSLL Não Retido</li><li class="active-result" style="" data-option-array-index="4">PIS Retido, COFINS/CSLL Não Retido</li><li class="active-result" style="" data-option-array-index="5">COFINS Retido, PIS/CSLL Não Retido</li><li class="active-result" style="" data-option-array-index="6">PIS Não Retido, COFINS/CSLL Retidos</li><li class="active-result" style="" data-option-array-index="7">PIS/COFINS Não Retidos, CSLL Retido</li><li class="active-result" style="" data-option-array-index="8">COFINS Não Retido, PIS/CSLL Retidos</li></ul></div></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.PISCofins.TipoRetencao" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>IRRF</span><a class="" data-content="Imposto de Renda Retido na Fonte (IRRF) é uma obrigação tributária federal em que a pessoa jurídica ou equiparada, está obrigada a reter do beneficiário da renda, o imposto correspondente, nos termos estabelecidos pelo Regulamento do Imposto de Renda." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><span class="input-group-addon sem-borda-direita">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo IRRF deve ser um número." id="TributacaoFederal_ValorIRRF" inputmode="numeric" maxlength="22" name="TributacaoFederal.ValorIRRF" type="text" value=""></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.ValorIRRF" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Contribuições Sociais - Retidas</span><a class="" data-content="Neste campo serão consideradas todas as contribuições que compõem os valores retidos de PIS, COFINS e CSLL." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><span class="input-group-addon sem-borda-direita">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo Contribuições Sociais - Retidas deve ser um número." id="TributacaoFederal_ValorCSLL" inputmode="numeric" maxlength="22" name="TributacaoFederal.ValorCSLL" type="text" value=""></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.ValorCSLL" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Contribuição Previdenciária - Retida</span><a class="" data-content="A Contribuição Previdenciária (CP) é um tributo federal e é composta pelo Risco Ambiental do Trabalho (RAT) ou Seguro de Acidente do Trabalho (SAT) e pela Contribuição Previdenciária Patronal (CPP). Essas contribuições são calculadas pela aplicação de uma alíquota sobre o total das remunerações pagas ou creditadas, no decorrer do mês, aos segurados empregados e trabalhadores avulsos e são destinadas ao financiamento da Seguridade Social. As contribuições mencionadas estão regidas pela lei 8.212/1991" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><span class="input-group-addon sem-borda-direita">R$</span><input class="form-control monetario" data-val="true" data-val-number="O campo Contribuição Previdenciária - Retida deve ser um número." id="TributacaoFederal_ValorCP" inputmode="numeric" maxlength="22" name="TributacaoFederal.ValorCP" type="text" value=""></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="TributacaoFederal.ValorCP" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="pnlValorTributos" class="pnlCollapse">
+        <h2>Valor aproximado dos tributos</h2>
+        <div class="retratil">
+            <div class="radiobutton "><label><input id="ValorTributos_TipoValorTributos" name="ValorTributos.TipoValorTributos" type="radio" value="1">Preencher os valores monetários em cada NFS-e emitida<span class="cr"><i class="cr-icon"></i></span></label></div>
+            <div id="pnlValoresMonetarios" style="display:none;">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Federal<span class="asterisco">*</span></span><a class="" data-content="Valor total de impostos federais da NFS-e em relação ao valor total do serviço" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><span class="input-group-addon sem-borda-direita ">R$</span><input class="form-control monetario sem-borda-esquerda aceita-zero" data-val="true" data-val-number="O campo Federal deve ser um número." id="ValorTributos_ValorTotalFederal" inputmode="numeric" maxlength="22" name="ValorTributos.ValorTotalFederal" type="text" value=""></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ValorTributos.ValorTotalFederal" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Estadual<span class="asterisco">*</span></span><a class="" data-content="Valor total de impostos estaduais da NFS-e em relação ao valor total do serviço" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><span class="input-group-addon sem-borda-direita ">R$</span><input class="form-control monetario sem-borda-esquerda aceita-zero" data-val="true" data-val-number="O campo Estadual deve ser um número." id="ValorTributos_ValorTotalEstadual" inputmode="numeric" maxlength="22" name="ValorTributos.ValorTotalEstadual" type="text" value=""></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ValorTributos.ValorTotalEstadual" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Municipal<span class="asterisco">*</span></span><a class="" data-content="Valor total do imposto municipal da NFS-e em relação ao valor total do serviço" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><span class="input-group-addon sem-borda-direita ">R$</span><input class="form-control monetario sem-borda-esquerda aceita-zero" data-val="true" data-val-number="O campo Municipal deve ser um número." id="ValorTributos_ValorTotalMunicipal" inputmode="numeric" maxlength="22" name="ValorTributos.ValorTotalMunicipal" type="text" value=""></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ValorTributos.ValorTotalMunicipal" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="radiobutton "><label><input checked="checked" id="ValorTributos_TipoValorTributos" name="ValorTributos.TipoValorTributos" type="radio" value="2">Configurar os valores percentuais correspondentes<span class="cr"><i class="cr-icon"></i></span></label></div>
+            <div id="pnlValoresPercentuais" style="">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Federal<span class="asterisco">*</span></span><a class="" data-content="Percentual total de impostos federais da NFS-e em relação ao valor total do serviço" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><input class="form-control percentual sem-borda-direita aceita-zero" data-val="true" data-val-number="O campo Federal deve ser um número." id="ValorTributos_PercentualTotalFederal" maxlength="6" name="ValorTributos.PercentualTotalFederal" type="text" value="9,25"><span class="input-group-addon sem-borda-esquerda ">%</span></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ValorTributos.PercentualTotalFederal" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Estadual<span class="asterisco">*</span></span><a class="" data-content="Percentual total de impostos estaduais da NFS-e em relação ao valor total do serviço" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><input class="form-control percentual sem-borda-direita aceita-zero" data-val="true" data-val-number="O campo Estadual deve ser um número." id="ValorTributos_PercentualTotalEstadual" maxlength="6" name="ValorTributos.PercentualTotalEstadual" type="text" value="0,00"><span class="input-group-addon sem-borda-esquerda ">%</span></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ValorTributos.PercentualTotalEstadual" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Municipal<span class="asterisco">*</span></span><a class="" data-content="Percentual total do imposto municipal da NFS-e em relação ao valor total do serviço" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <div class="input-group"><input class="form-control percentual sem-borda-direita aceita-zero" data-val="true" data-val-number="O campo Municipal deve ser um número." id="ValorTributos_PercentualTotalMunicipal" maxlength="6" name="ValorTributos.PercentualTotalMunicipal" type="text" value="5,00"><span class="input-group-addon sem-borda-esquerda ">%</span></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="ValorTributos.PercentualTotalMunicipal" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <div id="pnlOpcaoParaMEI" style="display:none;">
+                    <div class="radio-option-block">
+                        <div class="radiobutton "><label><input id="ValorTributos_TipoValorTributos" name="ValorTributos.TipoValorTributos" type="radio" value="3">Não informar nenhum valor estimado para os Tributos (Decreto 8.264/2014)<span class="cr"><i class="cr-icon"></i></span></label></div>
+                    </div>
+                </div>
+                <div id="pnlOpcaoParaEPP" style="display:none;">
+                    <div class="radio-option-block">
+                        <div class="radiobutton "><label><input id="ValorTributos_TipoValorTributos" name="ValorTributos.TipoValorTributos" type="radio" value="4">Informar alíquota do Simples Nacional<span class="cr"><i class="cr-icon"></i></span></label></div>
+                    </div>
+                    <div id="pnlValorAliquotaSN" style="display:none;">
+                        <div class="row">
+                            <div class="col-xs-12 col-md-4">
+                                <div class="form-group form-group-lg">
+                                    <label class="control-label"><span>Alíquota no Simples Nacional<span class="asterisco">*</span></span><a class="" data-content="Descrição" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                                    <div class="input-group"><input class="form-control percentual" data-val="true" data-val-number="O campo Alíquota no Simples Nacional deve ser um número." id="ValorTributos_AliquotaSN" maxlength="6" name="ValorTributos.AliquotaSN" type="text" value=""><span class="input-group-addon sem-borda-esquerda ">%</span></div>
+                                    <span class="field-validation-valid text-danger" data-valmsg-for="ValorTributos.AliquotaSN" data-valmsg-replace="true"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <span class="field-validation-valid text-danger" data-valmsg-for="ValorTributos.TipoValorTributos" data-valmsg-replace="true"></span>
+        </div>
+    </div>
+    <div class="comandos">
+        <a id="btnVoltar" href="/EmissorNacional/DPS/Servico?idr=UFluRUgyVHFFMHdoZHpCd0IrMW82Zz090" class="btn btn-lg btn-info float-left">
+            <img src="/EmissorNacional/img/btn-voltar.svg"><span>Voltar</span>
+        </a>
+        <button type="submit" class="btn btn-lg btn-primary direita has-spin">
+            <span>Avançar</span><img src="/EmissorNacional/img/btn-avancar.svg">
+        </button>
+    </div>
+</form>
+<div id="modalDeducao" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+        </div>
+    </div>
+</div>
+
+<div id="modalPessoaParaRetencao" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+        </div>
+    </div>
+</div>
+    </div>
+
+    <footer>
+        <div class="parceiros">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-offset-1 col-md-2">
+                        <a href="http://idg.receita.fazenda.gov.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-rfb.png" class="logo" alt="Receita Federal do Brasil">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.sebrae.com.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-sebrae.png" class="logo" alt="Sebrae">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.cnm.org.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-cnm.png" class="logo" alt="Confederação Nacional dos Municípios">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.abrasf.org.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-abrasf.png" class="logo" alt="Associação Brasileira das Secretarias de Finanças das Capitais">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://portal.siscomex.gov.br/legislacao/orgaos/secretaria-de-comercio-exterior-secex" target="_blank">
+                            <img src="/EmissorNacional/img/logo-secex.png" class="logo" alt="Secretaria de Comércio Exterior">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="info">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 logo">
+                        <img src="/EmissorNacional/img/logo-nfse-branca-sm.svg" class="logo-branca" alt="NFS-e">
+                    </div>
+                    <div class="col-md-8 versao">
+                        Portal de Gestão NFS-e - Contribuinte | Versão 1.4.0.27
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="modalLoading" class="modalBgLoading" style="display:none;">
+        <div class="loading">
+            <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+            <div class="texto">Por favor, aguarde...</div>
+        </div>
+    </div>
+
+    <div id="modalPessoa" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+
+
+
+</body></html>

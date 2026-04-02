@@ -1,0 +1,481 @@
+<html><head>
+    <meta name="viewport" content="width=device-width">
+    <title>NFS-e | Portal Contribuinte</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <link href="/EmissorNacional/Content/Base?v=PNNgqFMeiX_JCCYDv-3Z3MCHsfnKA_V8oEHE8c3GJic1" rel="stylesheet">
+
+    
+    <link href="/EmissorNacional/Content/dashboard.css" rel="stylesheet">
+
+    <script type="text/javascript">
+        window.UrlBase = "https://www.nfse.gov.br/emissornacional/";
+        window.UrlRest = "https://restnfseprod.srv.cd.serpro";
+        window.sessionStorage.setItem("accessToken", 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRobWV0aG9kIjoiU0VOSEEiLCJ1bmlxdWVfbmFtZSI6IiIsImluc2NyaWNhbyI6IjA0NDk0MTA2MDAwMTQwIiwidGlwb19pbnNjcmljYW8iOiJDTlBKIiwibm9tZSI6IiIsInJvbGUiOiJDT05UUklCVUlOVEUiLCJuYmYiOjE3NzQwOTU0MzAsImV4cCI6MTc3NDE4NTQzMCwiaWF0IjoxNzc0MDk1NDMwLCJpc3MiOiJodHRwOi8vd3d3LnNlcnByby5nb3YuYnIifQ.lNM-vqRxYqR4aH19tUGnNvJuvgxtb3z5PuZ7Ry5NqBs');
+    </script>
+    <script src="/EmissorNacional/Scripts/Base?v=9aYlZCGNwOnQ9M-uWKF6qWROrguA9sBYeGWayB9cXLg1"></script><style type="text/css">.dropdown-submenu:hover>.dropdown-menu{display:none}</style>
+
+    
+    <script src="/EmissorNacional/Scripts/dashboard.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Inicializa o dashboard
+            $('#dashboard').jDashboard();            
+            // Evento click do botão adicionar acesso
+            $('#btnAdicionarAcesso').on('click', function () {
+                ExibirAlerta('Funcionalidade indisponível');
+            });
+        });
+    </script>
+
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-static-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <div class="navbar-brand completa">
+                    <a href="/EmissorNacional/"><img src="/EmissorNacional/img/logo-nfse-assinatura-horizontal.svg"></a>
+                </div>
+                <div class="navbar-brand simples">
+                    <a href="/EmissorNacional/"><img src="/EmissorNacional/img/logo-header-simples.svg"></a>
+                </div>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/EmissorNacional/" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Principal"><div><img src="/EmissorNacional/img/menu-home-35.svg"></div><span class="nome-mobile">Página Principal</span></a>
+                    </li>
+                    
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img src="/EmissorNacional/img/menu-nova-35.svg"><span class="caret"></span></div><span class="nome-mobile">Nova NFS-e</span>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header titulo-menu">Tipos de emissão:</li>
+                            <li>
+                                <a href="/EmissorNacional/DPS/Pessoas">Emissão completa</a>
+                            </li>
+                            <li>
+                                <a href="/EmissorNacional/DPS/Simplificada">Emissão simplificada</a>
+                            </li>
+                            <li>
+                                <a href="/EmissorNacional/ByPass/Pessoas">Emissão por decisão administrativa/judicial</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Emitidas" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="NFS-e Emitidas"><div><img src="/EmissorNacional/img/menu-emitidas-35.svg" style="top: -10px;"></div><span class="nome-mobile">NFS-e Emitidas</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Recebidas" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="NFS-e Recebidas"><div><img src="/EmissorNacional/img/menu-recebidas-35.svg"></div><span class="nome-mobile">NFS-e Recebidas</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Rascunhos" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Rascunhos"><div><img src="/EmissorNacional/img/menu-rascunhos-35.svg"></div><span class="nome-mobile">Rascunhos</span></a>
+                    </li>
+
+                    <!-- MAN desabilitado em Produção Restrita
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                           role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img src="~/img/menu-apuracao-35.svg" /><span class="caret"></span></div><span class="nome-mobile">Apuração Nacional</span>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header titulo-menu">Apuração Nacional:</li>
+                            <li>
+                                <a href="">Pré-Apuração</a>
+                            </li>
+                            <li>
+                                <a href="">Apuração</a>
+                            </li>
+                            <li>
+                                <a href="">Arrecadação</a>
+                            </li>
+                            <li>
+                                <a href="">Créditos/Débitos</a>
+                            </li>
+                        </ul>
+                    </li>
+                    -->
+
+                    <li>
+                        <a href="/EmissorNacional/Perfil/Configuracao" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Configurações"><div><img src="/EmissorNacional/img/menu-config-35.svg"></div><span class="nome-mobile">Configurações</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Perfil/ServicosFavoritos" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Serviços Favoritos"><div><img src="/EmissorNacional/img/menu-favoritos-35.svg" style="top: -2px;"></div><span class="nome-mobile">Serviços Favoritos</span></a>
+                    </li>
+                    <li class="divisor"></li>
+                    <li class="dropdown perfil">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img style="top: 2px" src="/EmissorNacional/img/menu-user-35.svg"><span class="caret"></span></div>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header">
+                                B P M SERVICOS LTDA<br>
+                                    <span>CNPJ: </span><span class="cnpj">04.494.106/0001-40</span><br>
+                            </li>
+                            <li><a href="/EmissorNacional/Login/Sair">Sair com segurança</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <nav class="navbar navbar-default navbar-breadcrumbs">
+        <div class="container">
+            <div class="breadcrumbs">
+    <span class="nome-sistema">
+        <a href="/EmissorNacional/">
+            <i class="fa fa-home"></i>Home
+        </a>
+    </span>
+</div>
+        </div>
+    </nav>
+
+    <div class="container container-fluid-xl container-body">
+        
+
+
+
+
+
+<div id="dashboard" class="row jdash">
+
+    
+
+    
+
+    
+
+    
+
+<div class="col-md-6 dashboard-coluna"><div id="wgtRascunhos" class="widget" style="display: block;">
+        <div class="cabecalho"><div class="cabecalho-inner"><img class="icone" src="/EmissorNacional/img/rascunho-azul-20.svg">Rascunhos<div class="jdash-collapse"></div></div></div>
+        <div class="jdash-body table">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width:140px;text-align:center;">
+                                Competência
+                            </th>
+                            <th class="td-texto-grande">
+                                Emitida para
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <tr data-id="197754274">
+                                <td style="width:140px;text-align:center;">
+                                    19/03/2026
+                                </td>
+                                <td class="td-texto-grande">
+                                    <div>
+                                            <span class="cnpj">11.350.659/0001-94</span>
+                                            -
+MUNICIPIO DE TRIUNFO                                    </div>
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/DPS/EmitirNFSe?idr=ZCs5TmttYWVWbTQreUEvZHNpOC80QT090" data-toggle="tooltip" data-placement="top" title="" data-original-title="Editar">
+                                        <img src="/EmissorNacional/img/tb-editar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr data-id="195589042">
+                                <td style="width:140px;text-align:center;">
+                                    16/03/2026
+                                </td>
+                                <td class="td-texto-grande">
+                                    <div>
+                                            <span class="cnpj">11.350.659/0001-94</span>
+                                            -
+MUNICIPIO DE TRIUNFO                                    </div>
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/DPS/EmitirNFSe?idr=Sm9LSnYxaUFmRWVXWWNCVk42SGVLQT090" data-toggle="tooltip" data-placement="top" title="" data-original-title="Editar">
+                                        <img src="/EmissorNacional/img/tb-editar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr data-id="194859092">
+                                <td style="width:140px;text-align:center;">
+                                    15/03/2026
+                                </td>
+                                <td class="td-texto-grande">
+                                    <div>
+                                            <span class="cnpj">11.350.659/0001-94</span>
+                                            -
+MUNICIPIO DE TRIUNFO                                    </div>
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/DPS/EmitirNFSe?idr=d0ZlNXlpc0xQVzY5T2lCWjI0UnlBQT090" data-toggle="tooltip" data-placement="top" title="" data-original-title="Editar">
+                                        <img src="/EmissorNacional/img/tb-editar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr data-id="194855854">
+                                <td style="width:140px;text-align:center;">
+                                    15/03/2026
+                                </td>
+                                <td class="td-texto-grande">
+                                    <div>
+                                            <span class="cnpj">11.350.659/0001-94</span>
+                                            -
+MUNICIPIO DE TRIUNFO                                    </div>
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/DPS/EmitirNFSe?idr=bEFIaDlIOUFrSVU5amJpOVM4YVpLdz090" data-toggle="tooltip" data-placement="top" title="" data-original-title="Editar">
+                                        <img src="/EmissorNacional/img/tb-editar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr data-id="194855152">
+                                <td style="width:140px;text-align:center;">
+                                    15/03/2026
+                                </td>
+                                <td class="td-texto-grande">
+                                    <div>
+                                            <span class="cnpj">11.350.659/0001-94</span>
+                                            -
+MUNICIPIO DE TRIUNFO                                    </div>
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/DPS/EmitirNFSe?idr=eG1ScHlSSWtIbDdxZnZSU1dEeWRZdz090" data-toggle="tooltip" data-placement="top" title="" data-original-title="Editar">
+                                        <img src="/EmissorNacional/img/tb-editar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                    </tbody>
+                </table>
+        </div>
+    </div><div id="wgtMeusDados" class="widget" style="display: block;">
+        <div class="cabecalho"><div class="cabecalho-inner"><img class="icone" src="/EmissorNacional/img/user-azul-20.svg">Meus dados<div class="jdash-collapse"></div></div></div>
+        <div class="jdash-body">
+            <p>
+                    <b>CNPJ: </b>
+                    <span class="cnpj">04.494.106/0001-40</span><br>
+            </p>
+            <p>
+                <b>Nome:</b> B P M SERVICOS LTDA
+            </p>
+            <p>
+                <b>E-mail:</b> bpmservicos@hotmail.com
+            </p>
+            <p>
+                <b>Telefone:</b> (87)99806-0102
+            </p>
+        </div>
+    </div></div><div class="col-md-6 dashboard-coluna"><div id="wgtUltimasNFSe" class="widget" style="display: block;">
+        <div class="cabecalho"><div class="cabecalho-inner"><img class="icone" src="/EmissorNacional/img/emitidas-azul-20.svg">Últimas NFS-e emitidas nos últimos 30 dias<div class="jdash-collapse"></div></div></div>
+        <div class="jdash-body table">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="td-data">
+                                Geração
+                            </th>
+                            <th>
+                                Emitida para
+                            </th>
+                            <th class="td-valor">
+                                Valor (R$)
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <tr data-chave="ZE9mVUFGMXdTY0U5ZFhuMFlqQTdVZWZVVkFoMnlYNDM1VVRZM053WmJua1B2ellWcU5GYzlibXVaS01QQmp6VFZXUUxLTGFJYzNrPQ2">
+                                <td class="td-data" data-label="Geração">
+                                    11/03/2026
+                                </td>
+                                <td class="td-texto-grande" data-label="Emitida para">
+                                    <div>
+<img data-toggle="tooltip" title="" src="/EmissorNacional/img/tb-tomador.svg" data-original-title="Tomador">
+                                                <span class="cnpj">10.291.177/0001-48</span>
+                                                -
+MUNICIPIO DE RIO FORMOSO                                    </div>
+                                </td>
+                                <td class="td-valor">
+                                    274.170,06
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/Notas/Visualizar/Index/26001042204494106000140000000000021026035226553468" data-toggle="tooltip" data-placement="top" title="" data-original-title="Visualizar">
+                                        <img src="/EmissorNacional/img/tb-visualizar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr data-chave="ZE9mVUFGMXdTY0U5ZFhuMFlqQTdVZWZVVkFoMnlYNDM1VVRZM053WmJua1d3aGRQVlJ5OEdYR0xybWRRbmM4SndRZ1M5bVlOdEhZPQ2">
+                                <td class="td-data" data-label="Geração">
+                                    11/03/2026
+                                </td>
+                                <td class="td-texto-grande" data-label="Emitida para">
+                                    <div>
+<img data-toggle="tooltip" title="" src="/EmissorNacional/img/tb-tomador.svg" data-original-title="Tomador">
+                                                <span class="cnpj">10.334.957/0001-28</span>
+                                                -
+FUNDO MUNICIPAL DE SAUDE                                    </div>
+                                </td>
+                                <td class="td-valor">
+                                    9.694,80
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/Notas/Visualizar/Index/26001042204494106000140000000000020926036890313463" data-toggle="tooltip" data-placement="top" title="" data-original-title="Visualizar">
+                                        <img src="/EmissorNacional/img/tb-visualizar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr data-chave="ZE9mVUFGMXdTY0U5ZFhuMFlqQTdVZWZVVkFoMnlYNDM1VVRZM053WmJubS8yY0VhZmErZGg4UG1iYVFab0RmRGdiYWNCVmRNUGFJPQ2">
+                                <td class="td-data" data-label="Geração">
+                                    10/03/2026
+                                </td>
+                                <td class="td-texto-grande" data-label="Emitida para">
+                                    <div>
+<img data-toggle="tooltip" title="" src="/EmissorNacional/img/tb-tomador.svg" data-original-title="Tomador">
+                                                <span class="cnpj">10.346.096/0001-06</span>
+                                                -
+MUNICIPIO DE AFOGADOS DA INGAZEIRA                                    </div>
+                                </td>
+                                <td class="td-valor">
+                                    7.652,67
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/Notas/Visualizar/Index/26001042204494106000140000000000020826039044398830" data-toggle="tooltip" data-placement="top" title="" data-original-title="Visualizar">
+                                        <img src="/EmissorNacional/img/tb-visualizar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr data-chave="ZE9mVUFGMXdTY0U5ZFhuMFlqQTdVZWZVVkFoMnlYNDM1VVRZM053WmJubWNyeEJWcUs5MTJUbVBxK3ZkQlppYjM2Ry9qbzRCZjdvPQ2">
+                                <td class="td-data" data-label="Geração">
+                                    10/03/2026
+                                </td>
+                                <td class="td-texto-grande" data-label="Emitida para">
+                                    <div>
+<img data-toggle="tooltip" title="" src="/EmissorNacional/img/tb-tomador.svg" data-original-title="Tomador">
+                                                <span class="cnpj">10.346.096/0001-06</span>
+                                                -
+MUNICIPIO DE AFOGADOS DA INGAZEIRA                                    </div>
+                                </td>
+                                <td class="td-valor">
+                                    31.316,91
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/Notas/Visualizar/Index/26001042204494106000140000000000020726031216780259" data-toggle="tooltip" data-placement="top" title="" data-original-title="Visualizar">
+                                        <img src="/EmissorNacional/img/tb-visualizar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr data-chave="ZE9mVUFGMXdTY0U5ZFhuMFlqQTdVZWZVVkFoMnlYNDM1VVRZM053WmJubW1PNzZsSVZhWHZCaW92dDVvbVBxRHJ4M250UEptaTlVPQ2">
+                                <td class="td-data" data-label="Geração">
+                                    10/03/2026
+                                </td>
+                                <td class="td-texto-grande" data-label="Emitida para">
+                                    <div>
+<img data-toggle="tooltip" title="" src="/EmissorNacional/img/tb-tomador.svg" data-original-title="Tomador">
+                                                <span class="cnpj">10.346.096/0001-06</span>
+                                                -
+MUNICIPIO DE AFOGADOS DA INGAZEIRA                                    </div>
+                                </td>
+                                <td class="td-valor">
+                                    7.142,43
+                                </td>
+                                <td class="td-opcoes">
+                                    <a href="/EmissorNacional/Notas/Visualizar/Index/26001042204494106000140000000000020626030108817315" data-toggle="tooltip" data-placement="top" title="" data-original-title="Visualizar">
+                                        <img src="/EmissorNacional/img/tb-visualizar.svg">
+                                    </a>
+                                </td>
+                            </tr>
+                    </tbody>
+                </table>
+        </div>
+    </div><div id="wgtAcessoRapido" class="widget" style="display: block;">
+        <div class="cabecalho"><div class="cabecalho-inner"><img class="icone" src="/EmissorNacional/img/acesso-azul-20.svg">Acesso Rápido<div class="jdash-collapse"></div></div></div>
+        <div class="jdash-body">
+            <a href="/EmissorNacional/DPS/Pessoas" class="btnAcesso" data-toggle="tooltip" data-original-title="Nova NFS-e">
+                <img src="/EmissorNacional/img/menu-nova-35.svg">
+            </a>
+            <a href="/EmissorNacional/Perfil/Configuracao" class="btnAcesso" data-toggle="tooltip" data-original-title="Configurações">
+                <img src="/EmissorNacional/img/menu-config-35.svg">
+            </a>
+            <a href="/EmissorNacional/Perfil/ServicosFavoritos" class="btnAcesso" data-toggle="tooltip" data-original-title="Meus Favoritos">
+                <img src="/EmissorNacional/img/menu-favoritos-35.svg">
+            </a>
+            <a id="btnAdicionarAcesso" href="javascript:void(0);" class="btnAcesso adicionar" data-toggle="tooltip" data-original-title="Incluir opção" style="display:none;">
+                <img src="/EmissorNacional/img/btn-novo.svg">
+            </a>
+        </div>
+    </div></div><div class="clear"></div><div class="sector"></div></div>
+
+    </div>
+
+    <footer>
+        <div class="parceiros">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-offset-1 col-md-2">
+                        <a href="http://idg.receita.fazenda.gov.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-rfb.png" class="logo" alt="Receita Federal do Brasil">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.sebrae.com.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-sebrae.png" class="logo" alt="Sebrae">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.cnm.org.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-cnm.png" class="logo" alt="Confederação Nacional dos Municípios">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.abrasf.org.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-abrasf.png" class="logo" alt="Associação Brasileira das Secretarias de Finanças das Capitais">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://portal.siscomex.gov.br/legislacao/orgaos/secretaria-de-comercio-exterior-secex" target="_blank">
+                            <img src="/EmissorNacional/img/logo-secex.png" class="logo" alt="Secretaria de Comércio Exterior">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="info">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 logo">
+                        <img src="/EmissorNacional/img/logo-nfse-branca-sm.svg" class="logo-branca" alt="NFS-e">
+                    </div>
+                    <div class="col-md-8 versao">
+                        Portal de Gestão NFS-e - Contribuinte | Versão 1.4.0.27
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="modalLoading" class="modalBgLoading" style="display:none;">
+        <div class="loading">
+            <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+            <div class="texto">Por favor, aguarde...</div>
+        </div>
+    </div>
+
+    <div id="modalPessoa" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+
+
+
+</body></html>

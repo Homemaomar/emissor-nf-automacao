@@ -1,0 +1,16 @@
+municipios_pe = [
+"Abreu e Lima/PE",
+"Afogados da Ingazeira/PE",
+"Arcoverde/PE",
+"Caruaru/PE",
+"Petrolina/PE",
+"Serra Talhada/PE",
+"Triunfo/PE",
+"Iguaracy/PE",
+"Solidão/PE",
+"Tuparetama/PE",
+"Rio Formoso/PE",
+"Santa Cruz da Baixa Verde/PE",
+"Serra Talhada/PE",
+"Flores/PE",
+]

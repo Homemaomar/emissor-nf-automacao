@@ -1,0 +1,1420 @@
+<html><head>
+    <meta name="viewport" content="width=device-width">
+    <title>NFS-e | Portal Contribuinte</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <link href="/EmissorNacional/Content/Base?v=PNNgqFMeiX_JCCYDv-3Z3MCHsfnKA_V8oEHE8c3GJic1" rel="stylesheet">
+
+    
+    <link href="/EmissorNacional/Content/Passos?v=h9LYsnO-1oEZh2yqdueeg3K5lLMDMIKYutNGSwsplYc1" rel="stylesheet">
+
+
+    <script type="text/javascript">
+        window.UrlBase = "https://www.nfse.gov.br/emissornacional/";
+        window.UrlRest = "https://restnfseprod.srv.cd.serpro";
+        window.sessionStorage.setItem("accessToken", 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRobWV0aG9kIjoiU0VOSEEiLCJ1bmlxdWVfbmFtZSI6IiIsImluc2NyaWNhbyI6IjA0NDk0MTA2MDAwMTQwIiwidGlwb19pbnNjcmljYW8iOiJDTlBKIiwibm9tZSI6IiIsInJvbGUiOiJDT05UUklCVUlOVEUiLCJuYmYiOjE3NzQwOTYzMDcsImV4cCI6MTc3NDE4NjMwNywiaWF0IjoxNzc0MDk2MzA3LCJpc3MiOiJodHRwOi8vd3d3LnNlcnByby5nb3YuYnIifQ.1vvWr2mUl6s7y3TASLuJG-dfWdioBeERN-vF3SfWfic');
+    </script>
+    <script src="/EmissorNacional/Scripts/Base?v=9aYlZCGNwOnQ9M-uWKF6qWROrguA9sBYeGWayB9cXLg1"></script><style type="text/css">.dropdown-submenu:hover>.dropdown-menu{display:none}</style>
+
+    
+    <script src="/EmissorNacional/Scripts/Pessoas?v=dtRDbLiUtvo1noXoP-RgLGrVM1TPD4LR33jDzWCr5d81"></script>
+
+
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-static-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <div class="navbar-brand completa">
+                    <a href="/EmissorNacional/"><img src="/EmissorNacional/img/logo-nfse-assinatura-horizontal.svg"></a>
+                </div>
+                <div class="navbar-brand simples">
+                    <a href="/EmissorNacional/"><img src="/EmissorNacional/img/logo-header-simples.svg"></a>
+                </div>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/EmissorNacional/" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Principal"><div><img src="/EmissorNacional/img/menu-home-35.svg"></div><span class="nome-mobile">Página Principal</span></a>
+                    </li>
+                    
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img src="/EmissorNacional/img/menu-nova-35.svg"><span class="caret"></span></div><span class="nome-mobile">Nova NFS-e</span>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header titulo-menu">Tipos de emissão:</li>
+                            <li>
+                                <a href="/EmissorNacional/DPS/Pessoas">Emissão completa</a>
+                            </li>
+                            <li>
+                                <a href="/EmissorNacional/DPS/Simplificada">Emissão simplificada</a>
+                            </li>
+                            <li>
+                                <a href="/EmissorNacional/ByPass/Pessoas">Emissão por decisão administrativa/judicial</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Emitidas" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="NFS-e Emitidas"><div><img src="/EmissorNacional/img/menu-emitidas-35.svg" style="top: -10px;"></div><span class="nome-mobile">NFS-e Emitidas</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Recebidas" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="NFS-e Recebidas"><div><img src="/EmissorNacional/img/menu-recebidas-35.svg"></div><span class="nome-mobile">NFS-e Recebidas</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Notas/Rascunhos" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Rascunhos"><div><img src="/EmissorNacional/img/menu-rascunhos-35.svg"></div><span class="nome-mobile">Rascunhos</span></a>
+                    </li>
+
+                    <!-- MAN desabilitado em Produção Restrita
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                           role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img src="~/img/menu-apuracao-35.svg" /><span class="caret"></span></div><span class="nome-mobile">Apuração Nacional</span>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header titulo-menu">Apuração Nacional:</li>
+                            <li>
+                                <a href="">Pré-Apuração</a>
+                            </li>
+                            <li>
+                                <a href="">Apuração</a>
+                            </li>
+                            <li>
+                                <a href="">Arrecadação</a>
+                            </li>
+                            <li>
+                                <a href="">Créditos/Débitos</a>
+                            </li>
+                        </ul>
+                    </li>
+                    -->
+
+                    <li>
+                        <a href="/EmissorNacional/Perfil/Configuracao" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Configurações"><div><img src="/EmissorNacional/img/menu-config-35.svg"></div><span class="nome-mobile">Configurações</span></a>
+                    </li>
+                    <li>
+                        <a href="/EmissorNacional/Perfil/ServicosFavoritos" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Serviços Favoritos"><div><img src="/EmissorNacional/img/menu-favoritos-35.svg" style="top: -2px;"></div><span class="nome-mobile">Serviços Favoritos</span></a>
+                    </li>
+                    <li class="divisor"></li>
+                    <li class="dropdown perfil">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" data-hover="dropdown">
+                            <div><img style="top: 2px" src="/EmissorNacional/img/menu-user-35.svg"><span class="caret"></span></div>
+                        </a>
+                        <ul class="dropdown-menu main-menu" style="right: -5px; margin-top: 5px;">
+                            <li class="dropdown-header">
+                                B P M SERVICOS LTDA<br>
+                                    <span>CNPJ: </span><span class="cnpj">04.494.106/0001-40</span><br>
+                            </li>
+                            <li><a href="/EmissorNacional/Login/Sair">Sair com segurança</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <nav class="navbar navbar-default navbar-breadcrumbs">
+        <div class="container">
+            <div class="breadcrumbs">
+    <span class="nome-sistema">
+        <a href="/EmissorNacional/">
+            <i class="fa fa-home"></i>Home
+        </a>
+    </span>
+                <span class="separador">::</span>
+
+        <a href="/EmissorNacional/DPS/Pessoas/NovaNFSe" title="Emissão Completa">Emissão Completa</a>
+            <span class="separador">::</span>
+
+    Pessoas
+</div>
+        </div>
+    </nav>
+
+    <div class="container container-fluid-xl container-body">
+        
+
+
+
+<div class="wizard">
+    <div class="wizard-inner">
+        <div class="connecting-line"></div>
+        <ul class="nav nav-tabs" role="tablist">
+                    <li class="ativo">
+                        <a href="javascript:void(0);">
+                            <span class="round-tab">
+                                <img class="passos-pessoas" src="/EmissorNacional/img/passos-pessoas-ativo-ico.svg">
+                            </span>
+                        </a>
+                        <a href="javascript:void(0);" class="tag">
+                            <span class="tag-text">Pessoas</span>
+                        </a>
+                    </li>
+                    <li class="fechado">
+                        <a href="javascript:void(0);">
+                            <span class="round-tab">
+                                <img class="passos-servico" src="/EmissorNacional/img/passos-servico-fechado-ico.svg">
+                            </span>
+                        </a>
+                        <a href="javascript:void(0);" class="tag">
+                            <span class="tag-text">Serviço</span>
+                        </a>
+                    </li>
+                    <li class="fechado">
+                        <a href="javascript:void(0);">
+                            <span class="round-tab">
+                                <img class="passos-valores" src="/EmissorNacional/img/passos-valores-fechado-ico.svg">
+                            </span>
+                        </a>
+                        <a href="javascript:void(0);" class="tag">
+                            <span class="tag-text">Valores</span>
+                        </a>
+                    </li>
+                    <li class="fechado">
+                        <a href="javascript:void(0);">
+                            <span class="round-tab">
+                                <img class="passos-nfse" src="/EmissorNacional/img/passos-nfse-fechado-ico.svg">
+                            </span>
+                        </a>
+                        <a href="javascript:void(0);" class="tag">
+                            <span class="tag-text">Emitir NFS-e</span>
+                        </a>
+                    </li>
+
+        </ul>
+    </div>
+</div>
+
+
+<script>
+    var inscricaoMunicipalEmitente = "";
+    var ehSubstituicao = 'False' === 'True';
+    var accessToken = '';
+    var tipoInscricao = 'CNPJ';
+    var inscricao = '04494106000140';
+    var codMunRFB = 0;
+    var ehAcessoComCertificadoDigital = 'False' == 'True';
+    var ehPraDesabilitarRegrasAcessoSemCertificado = 'True' == 'True';
+    var ehCnpjExigeAcessoCertificado = 'False' == 'True';
+    var ehAmbienteProducao = 'True' == 'True';
+
+    // Indica se em uma NFSE de substituicao MEI, se o tomador foi informado na NFSE original, o mesmo não pode ser alterado na NFSE de substituição.
+    var desabilitarTomadorNfseSubsMei = 'False' == 'True';;;
+    // Indica se em uma NFSE de substituicao MEI, se o intermediario foi informado na NFSE original, o mesmo não pode ser alterado na NFSE de substituição.
+    var desabilitarIntermediarioNfseSubsMei = 'False' == 'True';;;
+
+</script>
+
+<form action="/EmissorNacional/DPS/Pessoas" class="formdps" method="post">    <input type="hidden" id="NotaDoMei" name="NotaDoMei" value="False">
+    <input type="hidden" id="Prestador_LocalDomicilio" name="Prestador.LocalDomicilio" value="0">
+    <div class="pnlCollapse">
+        <div class="retratil" style="padding-top: 15px;padding-bottom: 0;">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>Data de Competência<span class="asterisco">*</span></span><a class="" data-content="Refere-se à data em que o serviço foi prestado. Para maiores informações, consulte a legislação do município onde incidirá o ISSQN." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <div class="input-group input-group-lg"><input class="form-control data" data-date-end-date="21-03-2026" data-val="true" data-val-date="O campo Data de Competência deve ser uma data." id="DataCompetencia" name="DataCompetencia" type="text" value=""><span class="input-group-btn"><button class="btn btn-lg btn-default btnCalendario" data-original-title="Abrir calendário" data-toggle="tooltip" id="btn_DataCompetencia" type="button"><div class="btn-calendario"></div></button></span></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="DataCompetencia" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="checkbox">
+                        <label>
+<input data-val="true" data-val-required="The Informar série e número da DPS field is required." id="InformarSerieNumeroDPS" name="InformarSerieNumeroDPS" type="checkbox" value="true">                            <span class="cr"><i class="cr-icon fa fa-check"></i></span>
+                            <span class="cr-text">
+                                Informar série e número da DPS
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div id="pnlTrascricaoDPS" style="display:none;">
+                <div class="bd-callout bd-callout-info">
+                    O número e a série da DPS são campos obrigatórios de controle da DPS que ajudam a identificar unicamente uma DPS.
+                    Em geral, campos são gerados automaticamente pelo sistema para cada emitente de NFS-e.
+                    No entanto, existem situções em que o emitente ainda necessita controlá-los ou deverá informá-los manualmente.
+                    O sistema emissor permite que o emitente possa informar o número de série (transcrever o número de série) que foi repassado ao não emitente da NFS-e.
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Série<span class="asterisco">*</span></span><a class="" data-content="A série transcrita manualmente para a DPS deve ser um número dentro da faixa definida para este fim, que é de 80000 até 89999." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <input class="form-control numerico" data-val="true" data-val-length="The field Série must be a string with a maximum length of 5." data-val-length-max="5" id="SerieDPS" maxlength="5" name="SerieDPS" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="SerieDPS" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Número da DPS<span class="asterisco">*</span></span></label>
+                            <input class="form-control num15pos" data-val="true" data-val-length="The field Número da DPS must be a string with a maximum length of 15." data-val-length-max="15" id="NumeroDPS" maxlength="15" name="NumeroDPS" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="NumeroDPS" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="pnlCollapse semi-aberto emitente">
+        <h2>Emitente da NFS-e</h2>
+        <div style="padding: 0 20px;">
+            <div class="row" style="margin-top: 5px;margin-bottom: 0;">
+                <div class="col-md-9">
+                    <div class="form-group">
+                        <label class="control-label"><span>Você irá emitir esta NFS-e como?<span class="asterisco">*</span></span><a class="" data-content="A NFS-e poderá ser emitida por um Prestador, Tomador ou Intermediário. No entanto, as emissões de NFS-e por Tomador e Intermediário não estão disponíveis. Não há previsão para disponibilização destas emissões no Sistema Nacional NFS-e." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <div class="radio-options">
+                            <div class="radiobutton "><label><input checked="checked" id="TipoEmitente" name="TipoEmitente" type="radio" value="1">Prestador<span class="cr"><i class="cr-icon"></i></span></label></div>
+                            <div class="radiobutton "><label><input id="TipoEmitente" name="TipoEmitente" type="radio" value="2">Tomador<span class="cr"><i class="cr-icon"></i></span></label></div>
+                            <div class="radiobutton "><label><input id="TipoEmitente" name="TipoEmitente" type="radio" value="3">Intermediário<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group form-group-lg">
+                        <input id="Prestador_EnderecoNacional_NomeMunicipio" name="Prestador.EnderecoNacional.NomeMunicipio" type="hidden" value="Afogados da Ingazeira/PE">
+                        <label class="control-label"><span>Município<span class="asterisco">*</span></span></label>
+                        <select class="form-control form-chosen" data-val="true" data-val-number="O campo Município deve ser um número." id="Prestador_EnderecoNacional_CodigoMunicipio" name="Prestador.EnderecoNacional.CodigoMunicipio" readonly="readonly" selected="selected" style="display: none;"><option value=""></option><option value="2600104">Afogados da Ingazeira/PE</option></select><div class="chosen-container chosen-container-single chosen-container-single-nosearch chosen-disabled" style="width: 100%;" title="" id="Prestador_EnderecoNacional_CodigoMunicipio_chosen"><a class="chosen-single" tabindex="-1"><span>Afogados da Ingazeira/PE</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly="" disabled=""></div><ul class="chosen-results"></ul></div></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.EnderecoNacional.CodigoMunicipio" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group form-group-lg">
+                            <label id="lblIMPrestador" class="control-label"><span>Indicador Municipal<span class="asterisco" style="">*</span></span></label>
+                        <select class="form-control form-chosen" data-val="true" data-val-length="The field Indicador Municipal must be a string with a maximum length of 15." data-val-length-max="15" id="Prestador_InscricaoMunicipal" name="Prestador.InscricaoMunicipal" readonly="readonly" selected="selected" style="display: none;"><option value="3002331">3002331</option></select><div class="chosen-container chosen-container-single chosen-container-single-nosearch chosen-disabled" style="width: 100%;" title="" id="Prestador_InscricaoMunicipal_chosen"><a class="chosen-single" tabindex="-1"><span>3002331</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly="" disabled=""></div><ul class="chosen-results"></ul></div></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.InscricaoMunicipal" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label">CNPJ</label>
+                        <input class="form-control cpfcnpj" data-val="true" data-val-length="The field CPF/CNPJ must be a string with a maximum length of 18." data-val-length-max="18" id="Prestador_Inscricao" maxlength="18" name="Prestador.Inscricao" readonly="readonly" type="text" value="">
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label">Razão Social</label>
+                        <input class="form-control" data-val="true" data-val-length="The field Nome/Razão Social must be a string with a maximum length of 150." data-val-length-max="150" id="Prestador_Nome" maxlength="150" name="Prestador.Nome" readonly="readonly" type="text" value="">
+                    </div>
+                </div>
+            </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Opção no Simples Nacional<span class="asterisco">*</span></span><a class="" data-content="ME ou EPP optante pelos Simples Nacional de acordo com LC 123/2006" data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                            <input id="SimplesNacional_Opcao" name="SimplesNacional.Opcao" type="hidden" value="1">
+                                <input id="txtOpcaoSN" type="text" class="form-control" disabled="disabled">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="SimplesNacional.Opcao" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="pnlRegimeApuracaoTributosSN" class="row" style="display:none;">
+                    <div class="col-md-12">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Regime de Apuração dos Tributos no Simples Nacional<span class="asterisco">*</span></span></label>
+                            <select class="form-control form-chosen" id="SimplesNacional_RegimeApuracaoTributosSN" name="SimplesNacional.RegimeApuracaoTributosSN" style="display: none;"><option value="">Selecione...</option>
+<option value="1">Regime de apuração dos tributos federais e municipal pelo Simples Nacional</option>
+<option value="2">Regime de apuração dos tributos federais pelo Simples Nacional e o ISSQN pela NFS-e conforme respectiva legislação municipal do tributo</option>
+<option value="3">Regime de apuração dos tributos federais e municipal pela NFS-e conforme respectivas legislações federal e municipal de cada tributo</option>
+</select><div class="chosen-container chosen-container-single chosen-container-single-nosearch" style="width: 100%;" title="" id="SimplesNacional_RegimeApuracaoTributosSN_chosen"><a class="chosen-single" tabindex="-1"><span>Selecione...</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly=""></div><ul class="chosen-results"></ul></div></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="SimplesNacional.RegimeApuracaoTributosSN" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        <div style="padding: 0 20px 15px; margin-top: 20px;">
+                <button id="btnMaisInfoEmitente" class="btn btn-lg btn-info" ativo="Ocultar detalhes do emitente" inativo="Exibir detalhes do emitente">
+                    Exibir detalhes do emitente
+                </button>
+        </div>
+        <div id="pnlMaisInfo" style="display:none;padding: 0 20px;">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label">Telefone</label>
+                        <input class="form-control" data-val="true" data-val-length="The field Telefone must be a string with a maximum length of 14." data-val-length-max="14" id="Prestador_Telefone" maxlength="14" name="Prestador.Telefone" readonly="readonly" type="text" value="">
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.Telefone" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label">E-mail</label>
+                        <input class="form-control" data-val="true" data-val-length="The field E-mail must be a string with a maximum length of 80." data-val-length-max="80" id="Prestador_Email" maxlength="80" name="Prestador.Email" readonly="readonly" type="text" value="">
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.Email" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+            <div id="pnlEmitenteEnderecoBrasil" class="enderecoBrasil">
+                <input data-val="true" data-val-required="The IndicadorEnderecoAlterado field is required." id="Prestador_EnderecoNacional_IndicadorEnderecoAlterado" name="Prestador.EnderecoNacional.IndicadorEnderecoAlterado" type="hidden" value="False">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label">CEP</label>
+                            <div class="input-group input-group-lg"><input autocomplete="off" class="form-control cep" data-val="true" data-val-length="The field CEP must be a string with a maximum length of 10." data-val-length-max="10" id="Prestador_EnderecoNacional_CEP" maxlength="10" name="Prestador.EnderecoNacional.CEP" type="text" value=""><span class="input-group-btn"><button class="btn btn-lg btn-default" id="btn_Prestador_EnderecoNacional_CEP" type="button"><i class="fa fa-search"></i></button></span></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.EnderecoNacional.CEP" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label">Logradouro</label>
+                            <input class="form-control" data-val="true" data-val-length="The field Logradouro must be a string with a maximum length of 255." data-val-length-max="255" id="Prestador_EnderecoNacional_Logradouro" maxlength="255" name="Prestador.EnderecoNacional.Logradouro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.EnderecoNacional.Logradouro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label">Número</label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Número must be a string with a maximum length of 60." data-val-length-max="60" id="Prestador_EnderecoNacional_Numero" maxlength="60" name="Prestador.EnderecoNacional.Numero" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.EnderecoNacional.Numero" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label">Complemento</label>
+                            <input class="form-control" data-val="true" data-val-length="The field Complemento must be a string with a maximum length of 156." data-val-length-max="156" id="Prestador_EnderecoNacional_Complemento" maxlength="156" name="Prestador.EnderecoNacional.Complemento" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.EnderecoNacional.Complemento" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label">Bairro</label>
+                            <input class="form-control" data-val="true" data-val-length="The field Bairro must be a string with a maximum length of 60." data-val-length-max="60" id="Prestador_EnderecoNacional_Bairro" maxlength="60" name="Prestador.EnderecoNacional.Bairro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Prestador.EnderecoNacional.Bairro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<div id="pnlTomador" data-tipopessoa="Tomador" class="pnlCollapse semi-aberto" style="">
+    <h2>Tomador do Serviço</h2>
+    <div style="padding: 0 20px;">
+        <div class="form-group form-group-lg">
+            <label class="control-label"><span>Onde está localizado o estabelecimento/domicílio?<span class="asterisco">*</span></span></label>
+            <div class="radio-options">
+                <div class="radiobutton inline"><label><input checked="checked" data-val="true" data-val-number="O campo Onde está localizado o estabelecimento/domicílio? deve ser um número." id="Tomador_LocalDomicilio" name="Tomador.LocalDomicilio" type="radio" value="0">Tomador não informado<span class="cr"><i class="cr-icon"></i></span></label></div>
+                <div class="radiobutton inline"><label><input id="Tomador_LocalDomicilio" name="Tomador.LocalDomicilio" type="radio" value="1">Brasil<span class="cr"><i class="cr-icon"></i></span></label></div>
+                <div class="radiobutton inline"><label><input id="Tomador_LocalDomicilio" name="Tomador.LocalDomicilio" type="radio" value="2">Exterior<span class="cr"><i class="cr-icon"></i></span></label></div>
+            </div>
+        </div>
+    </div>
+    <div class="retratil" style="padding-top: 0px;">
+        <div id="pnlInscricaoBrasil" class="row" style="">
+            <div class="col-md-4">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>CPF/CNPJ<span class="asterisco">*</span></span></label>
+                    <div class="input-group input-group-lg"><input class="form-control cpfcnpj" data-val="true" data-val-length="The field CPF/CNPJ must be a string with a maximum length of 18." data-val-length-max="18" id="Tomador_Inscricao" maxlength="18" name="Tomador.Inscricao" type="text" value=""><span class="input-group-btn"><button class="btn btn-lg btn-default" data-original-title="Pesquisar CPF/CNPJ" data-toggle="tooltip" id="btn_Tomador_Inscricao_pesquisar" type="button"><i class="fa fa-search"></i></button><button class="btn btn-lg btn-default btn-group-separado" data-original-title="Últimos Tomadores" data-toggle="tooltip" id="btn_Tomador_Inscricao_historico" type="button"><i class="fa fa-users"></i></button></span></div>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.Inscricao" data-valmsg-replace="true"></span>
+
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>Indicador Municipal</span></label>
+                    <input class="form-control num15pos" data-val="true" data-val-length="The field Indicador Municipal must be a string with a maximum length of 15." data-val-length-max="15" id="Tomador_InscricaoMunicipal" maxlength="15" name="Tomador.InscricaoMunicipal" type="text" value="">
+                </div>
+            </div>
+        </div>
+        <div id="pnlInscricaoExterior" style="display:none;">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>O NIF será informado?<span class="asterisco">*</span></span><a class="" data-content="NIF - Número de Indentificação Fiscal - É o número fornecido pelo órgão de administração tributária do exterior e que identifica a  pessoa física ou jurídica externa ao Brasil (equivale ao CPF ou CNPJ, identificando a pessoa física ou jurídica no exterior)." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <div class="radio-options">
+                            <div class="radiobutton inline"><label><input id="Tomador_NIFInformado" name="Tomador.NIFInformado" type="radio" value="1">Sim<span class="cr"><i class="cr-icon"></i></span></label></div>
+                            <div class="radiobutton inline"><label><input id="Tomador_NIFInformado" name="Tomador.NIFInformado" type="radio" value="0">Não<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.NIFInformado" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 col-md-4">
+                    <div id="pnlTomadorNumeroNIF" class="form-group form-group-lg" style="display:none;">
+                        <label class="control-label"><span>NIF<span class="asterisco">*</span></span></label>
+                        <div class="input-group input-group-lg"><input class="form-control" data-val="true" data-val-length="The field NIF must be a string with a maximum length of 40." data-val-length-max="40" id="Tomador_NIF" maxlength="40" name="Tomador.NIF" type="text" value=""><span class="input-group-btn"><button class="btn btn-lg btn-default btn-group-separado" data-original-title="Últimos Tomadores" data-toggle="tooltip" id="btn_Tomador_NIF_historico" type="button"><i class="fa fa-users"></i></button></span></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.NIF" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 col-md-4">
+                    <div id="pnlTomadorMotivoNaoInformacaoNIF" class="form-group form-group-lg" style="display:none;">
+                        <label class="control-label"><span>Motivo da não informação do NIF<span class="asterisco">*</span></span></label>
+                        <select class="form-control form-chosen" id="Tomador_MotivoNaoInformacaoNIF" name="Tomador.MotivoNaoInformacaoNIF" selected="selected" style="display: none;"><option value="">Selecione...</option>
+<option value="1">Dispensado do NIF</option>
+<option value="2">Não exigência do NIF</option>
+</select><div class="chosen-container chosen-container-single chosen-container-single-nosearch" style="width: 100%;" title="" id="Tomador_MotivoNaoInformacaoNIF_chosen"><a class="chosen-single" tabindex="-1"><span>Selecione...</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly=""></div><ul class="chosen-results"></ul></div></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.MotivoNaoInformacaoNIF" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>Nome/Razão Social<span class="asterisco">*</span></span></label>
+                    <input class="form-control" data-val="true" data-val-length="The field Nome/Razão Social must be a string with a maximum length of 150." data-val-length-max="150" id="Tomador_Nome" maxlength="150" name="Tomador.Nome" type="text" value="" readonly="readonly">
+                    <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.Nome" data-valmsg-replace="true"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>Telefone</span></label>
+                    <input class="form-control telefone" data-val="true" data-val-length="The field Telefone must be a string with a maximum length of 14." data-val-length-max="14" id="Tomador_Telefone" maxlength="14" name="Tomador.Telefone" type="text" value="">
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>E-mail</span></label>
+                    <input class="form-control" data-val="true" data-val-length="The field E-mail must be a string with a maximum length of 80." data-val-length-max="80" id="Tomador_Email" maxlength="80" name="Tomador.Email" type="text" value="">
+                    <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.Email" data-valmsg-replace="true"></span>
+                </div>
+            </div>
+        </div>
+        <div id="pnlTomadorInformarEnderecoCheck" class="row" style="">
+            <div class="col-md-12">
+                <div class="checkbox">
+                    <label>
+                        <input data-val="true" data-val-required="The Informar endereço field is required." id="Tomador_InformarEndereco" name="Tomador.InformarEndereco" type="checkbox" value="true">
+                        <span class="cr"><i class="cr-icon fa fa-check"></i></span>
+                        <span class="cr-text">
+                            Informar endereço
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div id="pnlTomadorEndereco" style="">
+            <div id="pnlTomadorEnderecoBrasil" class="enderecoBrasil" style="">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>CEP<span class="asterisco">*</span></span></label>
+                            <div class="input-group input-group-lg"><input autocomplete="off" class="form-control cep" data-val="true" data-val-length="The field CEP must be a string with a maximum length of 10." data-val-length-max="10" id="Tomador_EnderecoNacional_CEP" maxlength="10" name="Tomador.EnderecoNacional.CEP" type="text" value=""><span class="input-group-btn"><button class="btn btn-lg btn-default" id="btn_Tomador_EnderecoNacional_CEP" type="button"><i class="fa fa-search"></i></button></span></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoNacional.CEP" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group form-group-lg">
+                            <input data-val="true" data-val-number="O campo Município deve ser um número." id="Tomador_EnderecoNacional_CodigoMunicipio" name="Tomador.EnderecoNacional.CodigoMunicipio" type="hidden" value="2615706">
+                            <label class="control-label"><span>Município</span></label>
+                            <input class="form-control" id="Tomador_EnderecoNacional_NomeMunicipio" name="Tomador.EnderecoNacional.NomeMunicipio" readonly="readonly" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoNacional.NomeMunicipio" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Bairro<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control bairro" data-val="true" data-val-length="The field Bairro must be a string with a maximum length of 60." data-val-length-max="60" id="Tomador_EnderecoNacional_Bairro" maxlength="60" name="Tomador.EnderecoNacional.Bairro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoNacional.Bairro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Logradouro<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control logradouro" data-val="true" data-val-length="The field Logradouro must be a string with a maximum length of 255." data-val-length-max="255" id="Tomador_EnderecoNacional_Logradouro" maxlength="255" name="Tomador.EnderecoNacional.Logradouro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoNacional.Logradouro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Número<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Número must be a string with a maximum length of 60." data-val-length-max="60" id="Tomador_EnderecoNacional_Numero" maxlength="60" name="Tomador.EnderecoNacional.Numero" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoNacional.Numero" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Complemento</span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Complemento must be a string with a maximum length of 156." data-val-length-max="156" id="Tomador_EnderecoNacional_Complemento" maxlength="156" name="Tomador.EnderecoNacional.Complemento" type="text" value="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="pnlTomadorEnderecoExterior" style="display:none;">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Logradouro<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Logradouro must be a string with a maximum length of 255." data-val-length-max="255" id="Tomador_EnderecoExterior_Logradouro" maxlength="255" name="Tomador.EnderecoExterior.Logradouro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoExterior.Logradouro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Número<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Número must be a string with a maximum length of 255." data-val-length-max="255" id="Tomador_EnderecoExterior_Numero" maxlength="255" name="Tomador.EnderecoExterior.Numero" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoExterior.Numero" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Complemento</span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Complemento must be a string with a maximum length of 255." data-val-length-max="255" id="Tomador_EnderecoExterior_Complemento" maxlength="255" name="Tomador.EnderecoExterior.Complemento" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoExterior.Complemento" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Bairro<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Bairro must be a string with a maximum length of 255." data-val-length-max="255" id="Tomador_EnderecoExterior_Bairro" maxlength="255" name="Tomador.EnderecoExterior.Bairro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoExterior.Bairro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Cidade<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Cidade must be a string with a maximum length of 255." data-val-length-max="255" id="Tomador_EnderecoExterior_Cidade" maxlength="255" name="Tomador.EnderecoExterior.Cidade" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoExterior.Cidade" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Código de Endereçamento Postal<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Código de Endereçamento Postal must be a string with a maximum length of 11." data-val-length-max="11" id="Tomador_EnderecoExterior_CodigoEnderecamentoPostal" maxlength="11" name="Tomador.EnderecoExterior.CodigoEnderecamentoPostal" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoExterior.CodigoEnderecamentoPostal" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Estado, província ou região<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" id="Tomador_EnderecoExterior_EstadoProvinciaRegiao" name="Tomador.EnderecoExterior.EstadoProvinciaRegiao" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoExterior.EstadoProvinciaRegiao" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <input id="Tomador_EnderecoExterior_NomePais" name="Tomador.EnderecoExterior.NomePais" type="hidden" value="">
+                            <label class="control-label"><span>País<span class="asterisco">*</span></span></label>
+                            <select class="form-control form-chosen" id="Tomador_EnderecoExterior_CodigoPais" name="Tomador.EnderecoExterior.CodigoPais" selected="selected" style="display: none;"><option value="">Selecione...</option>
+<option value="AF">Afeganistão																</option>
+<option value="ZA">África do Sul																</option>
+<option value="AX">Aland, Ilhas																</option>
+<option value="AL">Albânia, República da														</option>
+<option value="DE">Alemanha																	</option>
+<option value="AD">Andorra																	</option>
+<option value="AO">Angola																	</option>
+<option value="AI">Anguilla																	</option>
+<option value="AQ">Antártica																	</option>
+<option value="AG">Antígua e Barbuda															</option>
+<option value="SA">Arábia Saudita															</option>
+<option value="DZ">Argélia																	</option>
+<option value="AR">Argentina																	</option>
+<option value="AM">Armênia, República da														</option>
+<option value="AW">Aruba																		</option>
+<option value="AU">Austrália																	</option>
+<option value="AT">Áustria																	</option>
+<option value="AZ">Azerbaijão, República do													</option>
+<option value="BS">Bahamas, Ilhas															</option>
+<option value="BH">Bahrein, Ilhas															</option>
+<option value="BD">Bangladesh																</option>
+<option value="BB">Barbados																	</option>
+<option value="BY">Belarus, República da														</option>
+<option value="BE">Bélgica																	</option>
+<option value="BZ">Belize																	</option>
+<option value="BJ">Benim																		</option>
+<option value="BM">Bermudas																	</option>
+<option value="BO">Bolívia																	</option>
+<option value="BQ">Bonaire, Santo Eustáquio e Saba											</option>
+<option value="BA">Bosnia-Herzegovina, República da											</option>
+<option value="BW">Botsuana																	</option>
+<option value="BV">Bouvet, Ilha																</option>
+<option value="BN">Brunei																	</option>
+<option value="BG">Bulgária, República da													</option>
+<option value="BF">Burkina Faso																</option>
+<option value="BI">Burundi																	</option>
+<option value="BT">Butão																		</option>
+<option value="CV">Cabo Verde, República de													</option>
+<option value="CM">Camarões																	</option>
+<option value="KH">Camboja																	</option>
+<option value="CA">Canadá																	</option>
+<option value="QA">Catar																		</option>
+<option value="KY">Cayman, Ilhas																</option>
+<option value="KZ">Cazaquistão, República do													</option>
+<option value="TD">Chade																		</option>
+<option value="CL">Chile																		</option>
+<option value="CN">China, República Popular													</option>
+<option value="CY">Chipre																	</option>
+<option value="CX">Christmas, Ilha															</option>
+<option value="SG">Cingapura																	</option>
+<option value="CC">Cocos(Keeling), Ilhas														</option>
+<option value="CO">Colômbia																	</option>
+<option value="KM">Comores, Ilhas															</option>
+<option value="CG">Congo																		</option>
+<option value="CD">Congo, República Democrática do											</option>
+<option value="CK">Cook, Ilhas																</option>
+<option value="KP">Coréia (do Norte), Rep. Pop. Democrática da								</option>
+<option value="KR">Coréia (do Sul), República da												</option>
+<option value="CI">Costa do Marfim															</option>
+<option value="CR">Costa Rica																</option>
+<option value="HR">Croácia, República da														</option>
+<option value="CU">Cuba																		</option>
+<option value="CW">Curaçao																	</option>
+<option value="DK">Dinamarca																	</option>
+<option value="DJ">Djibuti																	</option>
+<option value="DM">Dominica, Ilha															</option>
+<option value="EG">Egito																		</option>
+<option value="SV">El Salvador																</option>
+<option value="AE">Emirados Árabes Unidos													</option>
+<option value="EC">Equador																	</option>
+<option value="ER">Eritreia																	</option>
+<option value="SK">Eslovaca, República														</option>
+<option value="SI">Eslovênia, República da													</option>
+<option value="ES">Espanha																	</option>
+<option value="US">Estados Unidos															</option>
+<option value="EE">Estônia, República da														</option>
+<option value="ET">Etiópia																	</option>
+<option value="FK">Falkland (Ilhas Malvinas)													</option>
+<option value="FO">Feroe, Ilhas																</option>
+<option value="FJ">Fiji																		</option>
+<option value="PH">Filipinas																	</option>
+<option value="FI">Finlândia																	</option>
+<option value="TW">Formosa (Taiwan)															</option>
+<option value="FR">França																	</option>
+<option value="GA">Gabão																		</option>
+<option value="GM">Gambia																	</option>
+<option value="GH">Gana																		</option>
+<option value="GE">Geórgia, República da														</option>
+<option value="GI">Gibraltar																	</option>
+<option value="GD">Granada																	</option>
+<option value="GR">Grécia																	</option>
+<option value="GL">Groenlândia																</option>
+<option value="GP">Guadalupe																	</option>
+<option value="GU">Guam																		</option>
+<option value="GT">Guatemala																	</option>
+<option value="GG">Guernsey																	</option>
+<option value="GF">Guiana Francesa															</option>
+<option value="GY">Guiana																	</option>
+<option value="GN">Guiné																		</option>
+<option value="GW">Guiné-Bissau																</option>
+<option value="GQ">Guiné-Equatorial															</option>
+<option value="HT">Haiti																		</option>
+<option value="HN">Honduras																	</option>
+<option value="HK">Hong Kong																	</option>
+<option value="HU">Hungria, República da														</option>
+<option value="YE">Iêmen																		</option>
+<option value="HM">Ilha Heard e Ilhas McDonald												</option>
+<option value="GS">Ilhas Geórgia do Sul e Sandwich do Sul									</option>
+<option value="IN">Índia																		</option>
+<option value="ID">Indonésia																	</option>
+<option value="IR">Irã, República Islâmica do												</option>
+<option value="IQ">Iraque																	</option>
+<option value="IE">Irlanda																	</option>
+<option value="IS">Islândia																	</option>
+<option value="IL">Israel																	</option>
+<option value="IT">Itália																	</option>
+<option value="JM">Jamaica																	</option>
+<option value="JP">Japão																		</option>
+<option value="JE">Jersey																	</option>
+<option value="JO">Jordânia																	</option>
+<option value="KI">Kiribati																	</option>
+<option value="KW">Kuwait																	</option>
+<option value="LA">Laos, Rep. Pop. Democrática do											</option>
+<option value="LS">Lesoto																	</option>
+<option value="LV">Letônia, República da														</option>
+<option value="LB">Líbano																	</option>
+<option value="LR">Libéria																	</option>
+<option value="LY">Líbia																		</option>
+<option value="LI">Liechtenstein																</option>
+<option value="LT">Lituânia, República da													</option>
+<option value="LU">Luxemburgo																</option>
+<option value="MO">Macau																		</option>
+<option value="MK">Macedônia, Ant. Rep. Iugoslava											</option>
+<option value="MG">Madagascar																</option>
+<option value="MY">Malásia																	</option>
+<option value="MW">Malavi																	</option>
+<option value="MV">Maldivas																	</option>
+<option value="ML">Mali																		</option>
+<option value="MT">Malta																		</option>
+<option value="IM">Man, Ilha de																</option>
+<option value="MP">Marianas do Norte															</option>
+<option value="MA">Marrocos																	</option>
+<option value="MH">Marshall, Ilhas															</option>
+<option value="MQ">Martinica																	</option>
+<option value="MU">Maurício																	</option>
+<option value="MR">Mauritânia																</option>
+<option value="YT">Mayotte																	</option>
+<option value="MX">México																	</option>
+<option value="FM">Micronésia																</option>
+<option value="MZ">Moçambique																</option>
+<option value="MD">Moldávia, República da													</option>
+<option value="MC">Mônaco																	</option>
+<option value="MN">Mongólia																	</option>
+<option value="ME">Montenegro																</option>
+<option value="MS">Montserrat, Ilhas															</option>
+<option value="MM">Myanmar (Birmânia)														</option>
+<option value="NA">Namíbia																	</option>
+<option value="NR">Nauru																		</option>
+<option value="NP">Nepal																		</option>
+<option value="NI">Nicarágua																	</option>
+<option value="NE">Níger																		</option>
+<option value="NG">Nigéria																	</option>
+<option value="NU">Niue, Ilha																</option>
+<option value="NF">Norfolk, Ilha																</option>
+<option value="NO">Noruega																	</option>
+<option value="NC">Nova Caledônia															</option>
+<option value="NZ">Nova Zelândia																</option>
+<option value="OM">Omã																		</option>
+<option value="UM">Pacífico, Ilhas do (Possessão dos EUA)									</option>
+<option value="NL">Países Baixos (Holanda)													</option>
+<option value="PW">Palau																		</option>
+<option value="PS">Palestina																	</option>
+<option value="PA">Panamá																	</option>
+<option value="PG">Papua Nova Guiné															</option>
+<option value="PK">Paquistão																	</option>
+<option value="PY">Paraguai																	</option>
+<option value="PE">Peru																		</option>
+<option value="PN">Pitcairn, Ilha De															</option>
+<option value="PF">Polinésia Francesa														</option>
+<option value="PL">Polônia, República da														</option>
+<option value="PR">Porto Rico																</option>
+<option value="PT">Portugal																	</option>
+<option value="KE">Quênia																	</option>
+<option value="KG">Quirguiz, República da													</option>
+<option value="GB">Reino Unido																</option>
+<option value="CF">República Centro-Africana													</option>
+<option value="DO">República Dominicana														</option>
+<option value="RE">Reunião, Ilha																</option>
+<option value="RO">Romênia																	</option>
+<option value="RW">Ruanda																	</option>
+<option value="RU">Rússia, Federação da														</option>
+<option value="EH">Saara Ocidental															</option>
+<option value="SB">Salomão, Ilhas															</option>
+<option value="AS">Samoa Americana															</option>
+<option value="WS">Samoa																		</option>
+<option value="SM">San Marino																</option>
+<option value="SH">Santa Helena																</option>
+<option value="LC">Santa Lúcia																</option>
+<option value="BL">São Bartolomeu															</option>
+<option value="KN">São Cristóvão e Neves, Ilhas												</option>
+<option value="MF">São Martinho (Parte Francesa)												</option>
+<option value="SX">São Martinho (Parte Holandesa)											</option>
+<option value="PM">São Pedro e Miquelon														</option>
+<option value="ST">São Tomé e Príncipe, Ilhas												</option>
+<option value="VC">São Vicente e Granadinas													</option>
+<option value="SN">Senegal																	</option>
+<option value="SL">Serra Leoa																</option>
+<option value="RS">Servia																	</option>
+<option value="SC">Seychelles																</option>
+<option value="SY">Síria, República Árabe da													</option>
+<option value="SO">Somália																	</option>
+<option value="LK">Sri Lanka																	</option>
+<option value="SZ">Suazilândia																</option>
+<option value="SS">Sudão do Sul																</option>
+<option value="SD">Sudão																		</option>
+<option value="SE">Suécia																	</option>
+<option value="CH">Suíça																		</option>
+<option value="SR">Suriname																	</option>
+<option value="SJ">Svalbard e Jan Mayen														</option>
+<option value="TJ">Tadjiquistão, República do												</option>
+<option value="TH">Tailândia																	</option>
+<option value="TZ">Tanzânia, Rep. Unida da													</option>
+<option value="CZ">Tcheca, República															</option>
+<option value="TF">Terras Austrais e Antárticas Francesas									</option>
+<option value="IO">Território Britânico no Oceano Índico										</option>
+<option value="TL">Timor Leste																</option>
+<option value="TG">Togo																		</option>
+<option value="TO">Tonga																		</option>
+<option value="TK">Toquelau, Ilhas															</option>
+<option value="TT">Trinidad e Tobago															</option>
+<option value="TN">Tunísia																	</option>
+<option value="TC">Turcas e Caicos, Ilhas													</option>
+<option value="TM">Turcomenistão, República do												</option>
+<option value="TR">Turquia																	</option>
+<option value="TV">Tuvalu																	</option>
+<option value="UA">Ucrânia																	</option>
+<option value="UG">Uganda																	</option>
+<option value="UY">Uruguai																	</option>
+<option value="UZ">Uzbequistão, República do													</option>
+<option value="VU">Vanuatu																	</option>
+<option value="VA">Vaticano, Est. da Cidade do												</option>
+<option value="VE">Venezuela																	</option>
+<option value="VN">Vietnã																	</option>
+<option value="VG">Virgens, Ilhas (Britânicas)												</option>
+<option value="VI">Virgens, Ilhas (E.U.A.)													</option>
+<option value="WF">Wallis e Futuna, Ilhas													</option>
+<option value="ZM">Zâmbia																	</option>
+<option value="ZW">Zimbábue																	</option>
+</select><div class="chosen-container chosen-container-single" style="width: 100%;" title="" id="Tomador_EnderecoExterior_CodigoPais_chosen"><a class="chosen-single" tabindex="-1"><span>Selecione...</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off"></div><ul class="chosen-results"></ul></div></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Tomador.EnderecoExterior.CodigoPais" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+</div>
+<div id="pnlIntermediario" data-tipopessoa="Intermediario" class="pnlCollapse semi-aberto" style="">
+    <h2>Intermediario do Serviço</h2>
+    <div style="padding: 0 20px;">
+        <div class="form-group form-group-lg">
+            <label class="control-label"><span>Onde está localizado o estabelecimento/domicílio?<span class="asterisco">*</span></span></label>
+            <div class="radio-options">
+                <div class="radiobutton inline"><label><input checked="checked" data-val="true" data-val-number="O campo Onde está localizado o estabelecimento/domicílio? deve ser um número." id="Intermediario_LocalDomicilio" name="Intermediario.LocalDomicilio" type="radio" value="0">Intermediário não informado<span class="cr"><i class="cr-icon"></i></span></label></div>
+                <div class="radiobutton inline"><label><input id="Intermediario_LocalDomicilio" name="Intermediario.LocalDomicilio" type="radio" value="1">Brasil<span class="cr"><i class="cr-icon"></i></span></label></div>
+                <div class="radiobutton inline"><label><input id="Intermediario_LocalDomicilio" name="Intermediario.LocalDomicilio" type="radio" value="2">Exterior<span class="cr"><i class="cr-icon"></i></span></label></div>
+            </div>
+        </div>
+    </div>
+    <div class="retratil" style="padding-top: 0;display:none;">
+        <div id="pnlInscricaoBrasil" class="row" style="display:none;">
+            <div class="col-md-4">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>CPF/CNPJ<span class="asterisco">*</span></span></label>
+                    <div class="input-group input-group-lg"><input class="form-control cpfcnpj" data-val="true" data-val-length="The field CPF/CNPJ must be a string with a maximum length of 18." data-val-length-max="18" id="Intermediario_Inscricao" maxlength="18" name="Intermediario.Inscricao" type="text" value=""><span class="input-group-btn"><button class="btn btn-lg btn-default" data-original-title="Pesquisar CPF/CNPJ" data-toggle="tooltip" id="btn_Intermediario_Inscricao_pesquisar" type="button"><i class="fa fa-search"></i></button><button class="btn btn-lg btn-default btn-group-separado" data-original-title="Últimos Intermediários" data-toggle="tooltip" id="btn_Intermediario_Inscricao_historico" type="button"><i class="fa fa-users"></i></button></span></div>
+                    <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.Inscricao" data-valmsg-replace="true"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>Indicador Municipal</span></label>
+                    <input class="form-control num15pos" data-val="true" data-val-length="The field Indicador Municipal must be a string with a maximum length of 15." data-val-length-max="15" id="Intermediario_InscricaoMunicipal" maxlength="15" name="Intermediario.InscricaoMunicipal" type="text" value="">
+                </div>
+            </div>
+        </div>
+        <div id="pnlInscricaoExterior" style="display:none;">
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group form-group-lg">
+                        <label class="control-label"><span>O NIF será informado?<span class="asterisco">*</span></span><a class="" data-content="NIF - Número de Indentificação Fiscal - É o número fornecido pelo órgão de administração tributária do exterior e que identifica a  pessoa física ou jurídica externa ao Brasil (equivale ao CPF ou CNPJ, identificando a pessoa física ou jurídica no exterior)." data-placement="top" data-toggle="popover" data-trigger="focus" role="button" tabindex="0" data-original-title="" title=""><i class="fa fa-question-circle helpBox"></i></a></label>
+                        <div class="radio-options">
+                            <div class="radiobutton inline"><label><input id="Intermediario_NIFInformado" name="Intermediario.NIFInformado" type="radio" value="1">Sim<span class="cr"><i class="cr-icon"></i></span></label></div>
+                            <div class="radiobutton inline"><label><input id="Intermediario_NIFInformado" name="Intermediario.NIFInformado" type="radio" value="0">Não<span class="cr"><i class="cr-icon"></i></span></label></div>
+                        </div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.NIFInformado" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 col-md-4">
+                    <div id="pnlIntermediarioNumeroNIF" class="form-group form-group-lg" style="display:none;">
+                        <label class="control-label"><span>NIF<span class="asterisco">*</span></span></label>
+                        <div class="input-group input-group-lg"><input class="form-control" data-val="true" data-val-length="The field NIF must be a string with a maximum length of 40." data-val-length-max="40" id="Intermediario_NIF" maxlength="40" name="Intermediario.NIF" type="text" value=""><span class="input-group-btn"><button class="btn btn-lg btn-default btn-group-separado" data-original-title="Últimos Intermediários" data-toggle="tooltip" id="btn_Intermediario_NIF_historico" type="button"><i class="fa fa-users"></i></button></span></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.NIF" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 col-md-4">
+                    <div id="pnlIntermediarioMotivoNaoInformacaoNIF" class="form-group form-group-lg" style="display:none;">
+                        <label class="control-label"><span>Motivo da não informação do NIF<span class="asterisco">*</span></span></label>
+                        <select class="form-control form-chosen" id="Intermediario_MotivoNaoInformacaoNIF" name="Intermediario.MotivoNaoInformacaoNIF" style="display: none;"><option value="">Selecione...</option>
+<option value="1">Dispensado do NIF</option>
+<option value="2">Não exigência do NIF</option>
+</select><div class="chosen-container chosen-container-single chosen-container-single-nosearch" style="width: 100%;" title="" id="Intermediario_MotivoNaoInformacaoNIF_chosen"><a class="chosen-single" tabindex="-1"><span>Selecione...</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" readonly=""></div><ul class="chosen-results"></ul></div></div>
+                        <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.MotivoNaoInformacaoNIF" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>Nome/Razão Social<span class="asterisco">*</span></span></label>
+                    <input class="form-control" data-val="true" data-val-length="The field Nome/Razão Social must be a string with a maximum length of 150." data-val-length-max="150" id="Intermediario_Nome" maxlength="150" name="Intermediario.Nome" type="text" value="">
+                    <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.Nome" data-valmsg-replace="true"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>Telefone</span></label>
+                    <input class="form-control telefone" data-val="true" data-val-length="The field Telefone must be a string with a maximum length of 14." data-val-length-max="14" id="Intermediario_Telefone" maxlength="14" name="Intermediario.Telefone" type="text" value="">
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="form-group form-group-lg">
+                    <label class="control-label"><span>E-mail</span></label>
+                    <input class="form-control" data-val="true" data-val-length="The field E-mail must be a string with a maximum length of 80." data-val-length-max="80" id="Intermediario_Email" maxlength="80" name="Intermediario.Email" type="text" value="">
+                    <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.Email" data-valmsg-replace="true"></span>
+                </div>
+            </div>
+        </div>
+        <div id="pnlIntermediarioInformarEnderecoCheck" class="row" style="">
+            <div class="col-md-12">
+                <div class="checkbox">
+                    <label>
+                        <input data-val="true" data-val-required="The Informar endereço field is required." id="Intermediario_InformarEndereco" name="Intermediario.InformarEndereco" type="checkbox" value="true">
+                        <span class="cr"><i class="cr-icon fa fa-check"></i></span>
+                        <span class="cr-text">
+                            Informar endereço
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div id="pnlIntermediarioEndereco" style="display:none;">
+            <div id="pnlIntermediarioEnderecoBrasil" class="enderecoBrasil" style="display:none;">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>CEP<span class="asterisco">*</span></span></label>
+                            <div class="input-group input-group-lg"><input class="form-control cep" data-val="true" data-val-length="The field CEP must be a string with a maximum length of 10." data-val-length-max="10" id="Intermediario_EnderecoNacional_CEP" maxlength="10" name="Intermediario.EnderecoNacional.CEP" type="text" value=""><span class="input-group-btn"><button class="btn btn-lg btn-default" id="btn_Intermediario_EnderecoNacional_CEP" type="button"><i class="fa fa-search"></i></button></span></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoNacional.CEP" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group form-group-lg">
+                            <input data-val="true" data-val-number="O campo Município deve ser um número." id="Intermediario_EnderecoNacional_CodigoMunicipio" name="Intermediario.EnderecoNacional.CodigoMunicipio" type="hidden" value="">
+                            <label class="control-label"><span>Município</span></label>
+                            <input autocomplete="off" class="form-control" id="Intermediario_EnderecoNacional_NomeMunicipio" name="Intermediario.EnderecoNacional.NomeMunicipio" readonly="readonly" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoNacional.NomeMunicipio" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Bairro<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control bairro" data-val="true" data-val-length="The field Bairro must be a string with a maximum length of 60." data-val-length-max="60" id="Intermediario_EnderecoNacional_Bairro" maxlength="60" name="Intermediario.EnderecoNacional.Bairro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoNacional.Bairro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Logradouro<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control logradouro" data-val="true" data-val-length="The field Logradouro must be a string with a maximum length of 255." data-val-length-max="255" id="Intermediario_EnderecoNacional_Logradouro" maxlength="255" name="Intermediario.EnderecoNacional.Logradouro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoNacional.Logradouro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Número<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Número must be a string with a maximum length of 60." data-val-length-max="60" id="Intermediario_EnderecoNacional_Numero" maxlength="60" name="Intermediario.EnderecoNacional.Numero" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoNacional.Numero" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Complemento</span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Complemento must be a string with a maximum length of 156." data-val-length-max="156" id="Intermediario_EnderecoNacional_Complemento" maxlength="156" name="Intermediario.EnderecoNacional.Complemento" type="text" value="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="pnlIntermediarioEnderecoExterior" style="display:none;">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Logradouro<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Logradouro must be a string with a maximum length of 255." data-val-length-max="255" id="Intermediario_EnderecoExterior_Logradouro" maxlength="255" name="Intermediario.EnderecoExterior.Logradouro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoExterior.Logradouro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Número<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Número must be a string with a maximum length of 255." data-val-length-max="255" id="Intermediario_EnderecoExterior_Numero" maxlength="255" name="Intermediario.EnderecoExterior.Numero" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoExterior.Numero" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Complemento</span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Complemento must be a string with a maximum length of 255." data-val-length-max="255" id="Intermediario_EnderecoExterior_Complemento" maxlength="255" name="Intermediario.EnderecoExterior.Complemento" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoExterior.Complemento" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Bairro<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Bairro must be a string with a maximum length of 255." data-val-length-max="255" id="Intermediario_EnderecoExterior_Bairro" maxlength="255" name="Intermediario.EnderecoExterior.Bairro" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoExterior.Bairro" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Cidade<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Cidade must be a string with a maximum length of 255." data-val-length-max="255" id="Intermediario_EnderecoExterior_Cidade" maxlength="255" name="Intermediario.EnderecoExterior.Cidade" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoExterior.Cidade" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Código de Endereçamento Postal<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" data-val="true" data-val-length="The field Código de Endereçamento Postal must be a string with a maximum length of 11." data-val-length-max="11" id="Intermediario_EnderecoExterior_CodigoEnderecamentoPostal" maxlength="11" name="Intermediario.EnderecoExterior.CodigoEnderecamentoPostal" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoExterior.CodigoEnderecamentoPostal" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <label class="control-label"><span>Estado, província ou região<span class="asterisco">*</span></span></label>
+                            <input autocomplete="off" class="form-control" id="Intermediario_EnderecoExterior_EstadoProvinciaRegiao" name="Intermediario.EnderecoExterior.EstadoProvinciaRegiao" type="text" value="">
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoExterior.EstadoProvinciaRegiao" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group form-group-lg">
+                            <input id="Intermediario_EnderecoExterior_NomePais" name="Intermediario.EnderecoExterior.NomePais" type="hidden" value="">
+                            <label class="control-label"><span>País<span class="asterisco">*</span></span></label>
+                            <select class="form-control form-chosen" id="Intermediario_EnderecoExterior_CodigoPais" name="Intermediario.EnderecoExterior.CodigoPais" style="display: none;"><option value="">Selecione...</option>
+<option value="AF">Afeganistão																</option>
+<option value="ZA">África do Sul																</option>
+<option value="AX">Aland, Ilhas																</option>
+<option value="AL">Albânia, República da														</option>
+<option value="DE">Alemanha																	</option>
+<option value="AD">Andorra																	</option>
+<option value="AO">Angola																	</option>
+<option value="AI">Anguilla																	</option>
+<option value="AQ">Antártica																	</option>
+<option value="AG">Antígua e Barbuda															</option>
+<option value="SA">Arábia Saudita															</option>
+<option value="DZ">Argélia																	</option>
+<option value="AR">Argentina																	</option>
+<option value="AM">Armênia, República da														</option>
+<option value="AW">Aruba																		</option>
+<option value="AU">Austrália																	</option>
+<option value="AT">Áustria																	</option>
+<option value="AZ">Azerbaijão, República do													</option>
+<option value="BS">Bahamas, Ilhas															</option>
+<option value="BH">Bahrein, Ilhas															</option>
+<option value="BD">Bangladesh																</option>
+<option value="BB">Barbados																	</option>
+<option value="BY">Belarus, República da														</option>
+<option value="BE">Bélgica																	</option>
+<option value="BZ">Belize																	</option>
+<option value="BJ">Benim																		</option>
+<option value="BM">Bermudas																	</option>
+<option value="BO">Bolívia																	</option>
+<option value="BQ">Bonaire, Santo Eustáquio e Saba											</option>
+<option value="BA">Bosnia-Herzegovina, República da											</option>
+<option value="BW">Botsuana																	</option>
+<option value="BV">Bouvet, Ilha																</option>
+<option value="BN">Brunei																	</option>
+<option value="BG">Bulgária, República da													</option>
+<option value="BF">Burkina Faso																</option>
+<option value="BI">Burundi																	</option>
+<option value="BT">Butão																		</option>
+<option value="CV">Cabo Verde, República de													</option>
+<option value="CM">Camarões																	</option>
+<option value="KH">Camboja																	</option>
+<option value="CA">Canadá																	</option>
+<option value="QA">Catar																		</option>
+<option value="KY">Cayman, Ilhas																</option>
+<option value="KZ">Cazaquistão, República do													</option>
+<option value="TD">Chade																		</option>
+<option value="CL">Chile																		</option>
+<option value="CN">China, República Popular													</option>
+<option value="CY">Chipre																	</option>
+<option value="CX">Christmas, Ilha															</option>
+<option value="SG">Cingapura																	</option>
+<option value="CC">Cocos(Keeling), Ilhas														</option>
+<option value="CO">Colômbia																	</option>
+<option value="KM">Comores, Ilhas															</option>
+<option value="CG">Congo																		</option>
+<option value="CD">Congo, República Democrática do											</option>
+<option value="CK">Cook, Ilhas																</option>
+<option value="KP">Coréia (do Norte), Rep. Pop. Democrática da								</option>
+<option value="KR">Coréia (do Sul), República da												</option>
+<option value="CI">Costa do Marfim															</option>
+<option value="CR">Costa Rica																</option>
+<option value="HR">Croácia, República da														</option>
+<option value="CU">Cuba																		</option>
+<option value="CW">Curaçao																	</option>
+<option value="DK">Dinamarca																	</option>
+<option value="DJ">Djibuti																	</option>
+<option value="DM">Dominica, Ilha															</option>
+<option value="EG">Egito																		</option>
+<option value="SV">El Salvador																</option>
+<option value="AE">Emirados Árabes Unidos													</option>
+<option value="EC">Equador																	</option>
+<option value="ER">Eritreia																	</option>
+<option value="SK">Eslovaca, República														</option>
+<option value="SI">Eslovênia, República da													</option>
+<option value="ES">Espanha																	</option>
+<option value="US">Estados Unidos															</option>
+<option value="EE">Estônia, República da														</option>
+<option value="ET">Etiópia																	</option>
+<option value="FK">Falkland (Ilhas Malvinas)													</option>
+<option value="FO">Feroe, Ilhas																</option>
+<option value="FJ">Fiji																		</option>
+<option value="PH">Filipinas																	</option>
+<option value="FI">Finlândia																	</option>
+<option value="TW">Formosa (Taiwan)															</option>
+<option value="FR">França																	</option>
+<option value="GA">Gabão																		</option>
+<option value="GM">Gambia																	</option>
+<option value="GH">Gana																		</option>
+<option value="GE">Geórgia, República da														</option>
+<option value="GI">Gibraltar																	</option>
+<option value="GD">Granada																	</option>
+<option value="GR">Grécia																	</option>
+<option value="GL">Groenlândia																</option>
+<option value="GP">Guadalupe																	</option>
+<option value="GU">Guam																		</option>
+<option value="GT">Guatemala																	</option>
+<option value="GG">Guernsey																	</option>
+<option value="GF">Guiana Francesa															</option>
+<option value="GY">Guiana																	</option>
+<option value="GN">Guiné																		</option>
+<option value="GW">Guiné-Bissau																</option>
+<option value="GQ">Guiné-Equatorial															</option>
+<option value="HT">Haiti																		</option>
+<option value="HN">Honduras																	</option>
+<option value="HK">Hong Kong																	</option>
+<option value="HU">Hungria, República da														</option>
+<option value="YE">Iêmen																		</option>
+<option value="HM">Ilha Heard e Ilhas McDonald												</option>
+<option value="GS">Ilhas Geórgia do Sul e Sandwich do Sul									</option>
+<option value="IN">Índia																		</option>
+<option value="ID">Indonésia																	</option>
+<option value="IR">Irã, República Islâmica do												</option>
+<option value="IQ">Iraque																	</option>
+<option value="IE">Irlanda																	</option>
+<option value="IS">Islândia																	</option>
+<option value="IL">Israel																	</option>
+<option value="IT">Itália																	</option>
+<option value="JM">Jamaica																	</option>
+<option value="JP">Japão																		</option>
+<option value="JE">Jersey																	</option>
+<option value="JO">Jordânia																	</option>
+<option value="KI">Kiribati																	</option>
+<option value="KW">Kuwait																	</option>
+<option value="LA">Laos, Rep. Pop. Democrática do											</option>
+<option value="LS">Lesoto																	</option>
+<option value="LV">Letônia, República da														</option>
+<option value="LB">Líbano																	</option>
+<option value="LR">Libéria																	</option>
+<option value="LY">Líbia																		</option>
+<option value="LI">Liechtenstein																</option>
+<option value="LT">Lituânia, República da													</option>
+<option value="LU">Luxemburgo																</option>
+<option value="MO">Macau																		</option>
+<option value="MK">Macedônia, Ant. Rep. Iugoslava											</option>
+<option value="MG">Madagascar																</option>
+<option value="MY">Malásia																	</option>
+<option value="MW">Malavi																	</option>
+<option value="MV">Maldivas																	</option>
+<option value="ML">Mali																		</option>
+<option value="MT">Malta																		</option>
+<option value="IM">Man, Ilha de																</option>
+<option value="MP">Marianas do Norte															</option>
+<option value="MA">Marrocos																	</option>
+<option value="MH">Marshall, Ilhas															</option>
+<option value="MQ">Martinica																	</option>
+<option value="MU">Maurício																	</option>
+<option value="MR">Mauritânia																</option>
+<option value="YT">Mayotte																	</option>
+<option value="MX">México																	</option>
+<option value="FM">Micronésia																</option>
+<option value="MZ">Moçambique																</option>
+<option value="MD">Moldávia, República da													</option>
+<option value="MC">Mônaco																	</option>
+<option value="MN">Mongólia																	</option>
+<option value="ME">Montenegro																</option>
+<option value="MS">Montserrat, Ilhas															</option>
+<option value="MM">Myanmar (Birmânia)														</option>
+<option value="NA">Namíbia																	</option>
+<option value="NR">Nauru																		</option>
+<option value="NP">Nepal																		</option>
+<option value="NI">Nicarágua																	</option>
+<option value="NE">Níger																		</option>
+<option value="NG">Nigéria																	</option>
+<option value="NU">Niue, Ilha																</option>
+<option value="NF">Norfolk, Ilha																</option>
+<option value="NO">Noruega																	</option>
+<option value="NC">Nova Caledônia															</option>
+<option value="NZ">Nova Zelândia																</option>
+<option value="OM">Omã																		</option>
+<option value="UM">Pacífico, Ilhas do (Possessão dos EUA)									</option>
+<option value="NL">Países Baixos (Holanda)													</option>
+<option value="PW">Palau																		</option>
+<option value="PS">Palestina																	</option>
+<option value="PA">Panamá																	</option>
+<option value="PG">Papua Nova Guiné															</option>
+<option value="PK">Paquistão																	</option>
+<option value="PY">Paraguai																	</option>
+<option value="PE">Peru																		</option>
+<option value="PN">Pitcairn, Ilha De															</option>
+<option value="PF">Polinésia Francesa														</option>
+<option value="PL">Polônia, República da														</option>
+<option value="PR">Porto Rico																</option>
+<option value="PT">Portugal																	</option>
+<option value="KE">Quênia																	</option>
+<option value="KG">Quirguiz, República da													</option>
+<option value="GB">Reino Unido																</option>
+<option value="CF">República Centro-Africana													</option>
+<option value="DO">República Dominicana														</option>
+<option value="RE">Reunião, Ilha																</option>
+<option value="RO">Romênia																	</option>
+<option value="RW">Ruanda																	</option>
+<option value="RU">Rússia, Federação da														</option>
+<option value="EH">Saara Ocidental															</option>
+<option value="SB">Salomão, Ilhas															</option>
+<option value="AS">Samoa Americana															</option>
+<option value="WS">Samoa																		</option>
+<option value="SM">San Marino																</option>
+<option value="SH">Santa Helena																</option>
+<option value="LC">Santa Lúcia																</option>
+<option value="BL">São Bartolomeu															</option>
+<option value="KN">São Cristóvão e Neves, Ilhas												</option>
+<option value="MF">São Martinho (Parte Francesa)												</option>
+<option value="SX">São Martinho (Parte Holandesa)											</option>
+<option value="PM">São Pedro e Miquelon														</option>
+<option value="ST">São Tomé e Príncipe, Ilhas												</option>
+<option value="VC">São Vicente e Granadinas													</option>
+<option value="SN">Senegal																	</option>
+<option value="SL">Serra Leoa																</option>
+<option value="RS">Servia																	</option>
+<option value="SC">Seychelles																</option>
+<option value="SY">Síria, República Árabe da													</option>
+<option value="SO">Somália																	</option>
+<option value="LK">Sri Lanka																	</option>
+<option value="SZ">Suazilândia																</option>
+<option value="SS">Sudão do Sul																</option>
+<option value="SD">Sudão																		</option>
+<option value="SE">Suécia																	</option>
+<option value="CH">Suíça																		</option>
+<option value="SR">Suriname																	</option>
+<option value="SJ">Svalbard e Jan Mayen														</option>
+<option value="TJ">Tadjiquistão, República do												</option>
+<option value="TH">Tailândia																	</option>
+<option value="TZ">Tanzânia, Rep. Unida da													</option>
+<option value="CZ">Tcheca, República															</option>
+<option value="TF">Terras Austrais e Antárticas Francesas									</option>
+<option value="IO">Território Britânico no Oceano Índico										</option>
+<option value="TL">Timor Leste																</option>
+<option value="TG">Togo																		</option>
+<option value="TO">Tonga																		</option>
+<option value="TK">Toquelau, Ilhas															</option>
+<option value="TT">Trinidad e Tobago															</option>
+<option value="TN">Tunísia																	</option>
+<option value="TC">Turcas e Caicos, Ilhas													</option>
+<option value="TM">Turcomenistão, República do												</option>
+<option value="TR">Turquia																	</option>
+<option value="TV">Tuvalu																	</option>
+<option value="UA">Ucrânia																	</option>
+<option value="UG">Uganda																	</option>
+<option value="UY">Uruguai																	</option>
+<option value="UZ">Uzbequistão, República do													</option>
+<option value="VU">Vanuatu																	</option>
+<option value="VA">Vaticano, Est. da Cidade do												</option>
+<option value="VE">Venezuela																	</option>
+<option value="VN">Vietnã																	</option>
+<option value="VG">Virgens, Ilhas (Britânicas)												</option>
+<option value="VI">Virgens, Ilhas (E.U.A.)													</option>
+<option value="WF">Wallis e Futuna, Ilhas													</option>
+<option value="ZM">Zâmbia																	</option>
+<option value="ZW">Zimbábue																	</option>
+</select><div class="chosen-container chosen-container-single" style="width: 100%;" title="" id="Intermediario_EnderecoExterior_CodigoPais_chosen"><a class="chosen-single" tabindex="-1"><span>Selecione...</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off"></div><ul class="chosen-results"></ul></div></div>
+                            <span class="field-validation-valid text-danger" data-valmsg-for="Intermediario.EnderecoExterior.CodigoPais" data-valmsg-replace="true"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+
+</div>
+    <div class="comandos">
+
+        <button id="btnAvancar" type="submit" class="btn btn-lg btn-primary direita has-spin">
+            <span>Avançar</span><img src="/EmissorNacional/img/btn-avancar.svg">
+        </button>
+    </div>
+</form>
+<div id="modalHistoricoPessoas" class="modal fade" tabindex="-1" role="dialog"></div>
+
+    </div>
+
+    <footer>
+        <div class="parceiros">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-offset-1 col-md-2">
+                        <a href="http://idg.receita.fazenda.gov.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-rfb.png" class="logo" alt="Receita Federal do Brasil">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.sebrae.com.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-sebrae.png" class="logo" alt="Sebrae">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.cnm.org.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-cnm.png" class="logo" alt="Confederação Nacional dos Municípios">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://www.abrasf.org.br/" target="_blank">
+                            <img src="/EmissorNacional/img/logo-abrasf.png" class="logo" alt="Associação Brasileira das Secretarias de Finanças das Capitais">
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="http://portal.siscomex.gov.br/legislacao/orgaos/secretaria-de-comercio-exterior-secex" target="_blank">
+                            <img src="/EmissorNacional/img/logo-secex.png" class="logo" alt="Secretaria de Comércio Exterior">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="info">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 logo">
+                        <img src="/EmissorNacional/img/logo-nfse-branca-sm.svg" class="logo-branca" alt="NFS-e">
+                    </div>
+                    <div class="col-md-8 versao">
+                        Portal de Gestão NFS-e - Contribuinte | Versão 1.4.0.27
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="modalLoading" class="modalBgLoading" style="display: none;">
+        <div class="loading">
+            <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+            <div class="texto">Por favor, aguarde...</div>
+        </div>
+    </div>
+
+    <div id="modalPessoa" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+
+
+
+</body></html>
