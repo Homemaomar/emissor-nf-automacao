@@ -1,8 +1,8 @@
-from pathlib import Path
+﻿from pathlib import Path
 from datetime import datetime
 import pandas as pd
 from openpyxl import load_workbook
-
+import os
 
 
 class PlanilhaNotasRepository:
@@ -13,7 +13,7 @@ class PlanilhaNotasRepository:
 
         if not self.caminho_planilha.exists():
             raise FileNotFoundError(
-                f"Planilha não encontrada: {self.caminho_planilha}"
+                f"Planilha nÃ£o encontrada: {self.caminho_planilha}"
             )
 
         self.df = self._carregar_planilha()
@@ -32,7 +32,7 @@ class PlanilhaNotasRepository:
                 abas_normalizadas.index("NOTAS")
             ]
         else:
-            raise Exception("Aba 'NOTAS' não encontrada")
+            raise Exception("Aba 'NOTAS' nÃ£o encontrada")
 
         df = pd.read_excel(
             self.caminho_planilha,
@@ -46,20 +46,20 @@ class PlanilhaNotasRepository:
         print("COLUNAS ORIGINAIS:", df.columns.tolist())
 
         # ===============================
-        # NORMALIZAÇÃO ROBUSTA
+        # NORMALIZAÃ‡ÃƒO ROBUSTA
         # ===============================
         def normalizar(col):
             return (
                 str(col)
                 .strip()
                 .upper()
-                .replace("Ç", "C")
-                .replace("Ã", "A")
-                .replace("Á", "A")
-                .replace("É", "E")
-                .replace("Í", "I")
-                .replace("Ó", "O")
-                .replace("Ú", "U")
+                .replace("Ã‡", "C")
+                .replace("Ãƒ", "A")
+                .replace("Ã", "A")
+                .replace("Ã‰", "E")
+                .replace("Ã", "I")
+                .replace("Ã“", "O")
+                .replace("Ãš", "U")
             )
 
         df.columns = [normalizar(col) for col in df.columns]
@@ -67,15 +67,15 @@ class PlanilhaNotasRepository:
         print("COLUNAS NORMALIZADAS:", df.columns.tolist())
 
         # ===============================
-        # VALIDAÇÃO OBRIGATÓRIA
+        # VALIDAÃ‡ÃƒO OBRIGATÃ“RIA
         # ===============================
         colunas_necessarias = ["STATUS", "ITEM"]
 
         for col in colunas_necessarias:
             if col not in df.columns:
                 raise Exception(
-                    f"Coluna obrigatória '{col}' não encontrada.\n"
-                    f"Colunas disponíveis: {df.columns.tolist()}"
+                    f"Coluna obrigatÃ³ria '{col}' nÃ£o encontrada.\n"
+                    f"Colunas disponÃ­veis: {df.columns.tolist()}"
                 )
 
         # ===============================
@@ -86,9 +86,29 @@ class PlanilhaNotasRepository:
 
         return df
 
+    def _coluna_cliente(self, df):
+        if "CLIENTE.1" in df.columns:
+            return "CLIENTE.1"
+        if "CLIENTE" in df.columns and "DESCRICAO" in df.columns:
+            return "CLIENTE"
+        if "SECRETARIA" in df.columns:
+            return "SECRETARIA"
+        if "CLIENTE" in df.columns:
+            return "CLIENTE"
+        return None
+
+    def _coluna_descricao(self, df):
+        if "DESCRICAO" in df.columns:
+            return "DESCRICAO"
+        if "DESCRIÇÃO" in df.columns:
+            return "DESCRIÇÃO"
+        if "CLIENTE.1" in df.columns and "CLIENTE" in df.columns:
+            return "CLIENTE"
+        return None
+
     def obter_dados_item(self, item_id):
         """
-        Recarrega a planilha e retorna os dados atualizados de um item específico
+        Recarrega a planilha e retorna os dados atualizados de um item especÃ­fico
         """
 
         df = self._carregar_planilha()
@@ -96,7 +116,7 @@ class PlanilhaNotasRepository:
         linha = df[df["ITEM"] == str(item_id)]
 
         if linha.empty:
-            raise Exception(f"Item {item_id} não encontrado na planilha.")
+            raise Exception(f"Item {item_id} nÃ£o encontrado na planilha.")
 
         dados = linha.iloc[0].to_dict()
 
@@ -105,27 +125,32 @@ class PlanilhaNotasRepository:
         return dados
 
     # ==========================================
-    # LISTAR NOTAS PENDENTES (PADRÃO OFICIAL)
+    # LISTAR NOTAS PENDENTES (PADRÃƒO OFICIAL)
     # ==========================================
-    def listar_notas_pendentes(self, secretaria=None, especie=None, itens=None):
+    def listar_notas_pendentes(self, cliente=None, especie=None, itens=None):
 
         df = self.df.copy()
+        coluna_cliente = self._coluna_cliente(df)
+        coluna_descricao = self._coluna_descricao(df)
 
-        # 🔍 DEBUG AQUI (AGORA SIM)
-        print("📊 COLUNAS DO DF:", df.columns.tolist())
-        print("📊 DESCRICAO DF:")
-        print(df["DESCRICAO"].head())
+        # ðŸ” DEBUG AQUI (AGORA SIM)
+        print("ðŸ“Š COLUNAS DO DF:", df.columns.tolist())
+        print("ðŸ“Š COLUNA CLIENTE:", coluna_cliente)
+        print("ðŸ“Š COLUNA DESCRICAO:", coluna_descricao)
 
         # STATUS
         df = df[df["STATUS"].str.upper() == "PENDENTE"]
 
-        # SECRETARIA
-        if secretaria and secretaria != "Todas":
-            df = df[df["SECRETARIA"] == secretaria]
+        # CLIENTE
+        if cliente and cliente != "Todos":
+            if coluna_cliente:
+                df = df[df[coluna_cliente] == cliente]
+            else:
+                df = df.iloc[0:0]
 
-        # ESPÉCIE
+        # ESPÃ‰CIE
         if especie and especie != "Todas":
-            df = df[df["ESPÉCIE"] == especie]
+            df = df[df["ESPÃ‰CIE"] == especie]
 
         # ITENS
         if itens:
@@ -142,14 +167,16 @@ class PlanilhaNotasRepository:
                 "excel_row": int(row["index"]) + 2,
 
                 "item": row.get("ITEM", ""),
-                "descricao": row.get("DESCRICAO", ""),  # 🔥 CORRETO
+                "cliente": row.get(coluna_cliente, "") if coluna_cliente else "",
+                "descricao": row.get(coluna_descricao, "") if coluna_descricao else "",
                 "valor": row.get("VALOR", 0),
                 "ir": row.get("IR", 0),
                 "iss": row.get("ISS", 0),
                 "cnpj": row.get("CNPJ", ""),
                 "ctn": row.get("CTN", ""),
                 "nbs": row.get("NBS", ""),
-                "email": row.get("EMAIL", "")
+                "email": row.get("EMAIL", ""),
+                "especie": row.get("ESPECIE", row.get("ESPÉCIE", "")),
             })
 
         return notas
@@ -170,12 +197,12 @@ class PlanilhaNotasRepository:
 
         wb = load_workbook(self.caminho_planilha, keep_vba=True)
 
-        # 🔥 Usa aba ativa (seguro)
+        # ðŸ”¥ Usa aba ativa (seguro)
         ws = wb.active
 
         headers = {}
 
-        # Mapear cabeçalhos
+        # Mapear cabeÃ§alhos
         for col in range(1, ws.max_column + 1):
             nome = ws.cell(row=1, column=col).value
             if nome:
@@ -185,7 +212,7 @@ class PlanilhaNotasRepository:
             if coluna in headers:
                 ws.cell(row=excel_row, column=headers[coluna], value=valor)
 
-        # Atualizações padrão
+        # AtualizaÃ§Ãµes padrÃ£o
         set_val("STATUS", status)
         set_val("EMITIDA_POR", usuario)
 
@@ -209,6 +236,8 @@ class PlanilhaNotasRepository:
 def montar_caminho_planilha(base_notas, ano, mes, municipio):
 
     base = Path(base_notas)
+    mes = str(mes or "").strip()
+    municipio = str(municipio or "").strip()
 
     # ==========================
     # VALIDAÇÃO DA BASE
@@ -222,6 +251,15 @@ def montar_caminho_planilha(base_notas, ano, mes, municipio):
     # MONTAR PASTA
     # ==========================
     pasta = base / ano / mes / municipio
+    aliases_mes = {
+        "03 - Marco": "03 - Março",
+        "03 - Março": "03 - Marco",
+    }
+
+    if not pasta.exists() and mes in aliases_mes:
+        pasta_alternativa = base / ano / aliases_mes[mes] / municipio
+        if pasta_alternativa.exists():
+            pasta = pasta_alternativa
 
     if not pasta.exists():
         raise FileNotFoundError(
@@ -249,7 +287,7 @@ def montar_caminho_planilha(base_notas, ano, mes, municipio):
     arquivos_encontrados = list(pasta.glob("*"))
 
     raise FileNotFoundError(
-        f"❌ Nenhuma planilha encontrada em:\n{pasta}\n\n"
+        f"âŒ Nenhuma planilha encontrada em:\n{pasta}\n\n"
         f"Arquivos encontrados:\n" +
         "\n".join(str(a.name) for a in arquivos_encontrados)
     )

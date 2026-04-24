@@ -2,10 +2,16 @@ import os
 from datetime import datetime
 
 
-def normalizar_texto(valor) -> str:
-    if valor is None:
+def normalizar_texto(valor):
+    if not valor:
         return ""
-    return str(valor).strip()
+
+    valor = str(valor).strip()
+
+    # 🔥 REMOVE ASPAS E ESPAÇOS ESCONDIDOS
+    valor = valor.replace('"', '').replace("'", "")
+
+    return valor
 
 
 def normalizar_status(valor, padrao="PENDENTE") -> str:

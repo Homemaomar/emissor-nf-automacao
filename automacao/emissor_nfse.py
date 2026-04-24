@@ -10,6 +10,7 @@ from automacao.login import realizar_login
 from automacao.base_webdriver import BaseWebDriver
 from automacao.site_steps import SiteStepsMixin
 from automacao.decorators import etapa_automacao
+from database.db import carregar_config
 from automacao.excecoes import (
     AutomacaoErro,
     NotaJaEmitidaErro,
@@ -56,6 +57,9 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         # ===============================
         self.caminho_base = caminho_base
         self.pasta_saida_base = pasta_saida_base
+        config = carregar_config()
+        self.prefeitura_login = config.get("login", "")
+        self.prefeitura_senha = config.get("senha", "")
 
         # ===============================
         # CALLBACKS
@@ -129,6 +133,67 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
             texto = texto.split("PERÍODO")[0]
 
         return texto.strip()
+    def _nome_mes_periodo(self, mes_competencia):
+        texto = str(mes_competencia or "").strip()
+        if not texto:
+            return ""
+
+        if " - " in texto:
+            return texto.split(" - ", 1)[1].strip().lower()
+
+        return texto.lower()
+    def _formatar_percentual_imposto(self, valor_imposto, valor_servico):
+        try:
+            valor_imposto = float(valor_imposto or 0)
+            valor_servico = float(valor_servico or 0)
+        except (TypeError, ValueError):
+            return ""
+
+        if valor_imposto <= 0 or valor_servico <= 0:
+            return ""
+
+        percentual = (valor_imposto / valor_servico) * 100
+        percentual_texto = f"{percentual:.1f}".replace(".", ",")
+        return f"{percentual_texto}%"
+    def _formatar_valor_brl(self, valor):
+        try:
+            valor = float(valor or 0)
+        except (TypeError, ValueError):
+            return ""
+
+        if valor <= 0:
+            return ""
+
+        return f"R${valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    def montar_descricao_nota(self, descricao, dados_nota):
+        descricao_base = self.limpar_descricao(descricao)
+        complementos = []
+
+        mes_periodo = self._nome_mes_periodo(dados_nota.get("competencia_mes"))
+        ano_periodo = str(dados_nota.get("competencia_ano") or "").strip()
+        if mes_periodo and ano_periodo:
+            complementos.append(f"PERÍODO:{mes_periodo}/{ano_periodo}")
+
+        percentual_ir = self._formatar_percentual_imposto(
+            dados_nota.get("ir"),
+            dados_nota.get("valor"),
+        )
+        valor_ir = self._formatar_valor_brl(dados_nota.get("ir"))
+        if percentual_ir and valor_ir:
+            complementos.append(f"IRRF({percentual_ir}){valor_ir}")
+
+        percentual_iss = self._formatar_percentual_imposto(
+            dados_nota.get("iss"),
+            dados_nota.get("valor"),
+        )
+        valor_iss = self._formatar_valor_brl(dados_nota.get("iss"))
+        if percentual_iss and valor_iss:
+            complementos.append(f"ISS({percentual_iss}){valor_iss}")
+
+        if not complementos:
+            return descricao_base
+
+        return f"{descricao_base} {' '.join(complementos)}".strip()
     # ABRIR PORTAL
     @etapa_automacao("Abrir Portal", tentativas=3, espera_segundos=2)
     def abrir_portal(self):
@@ -148,7 +213,11 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
 
         self._log("🔐 Realizando login...")
 
-        realizar_login(self.driver)
+        realizar_login(
+            self.driver,
+            self.prefeitura_login,
+            self.prefeitura_senha,
+        )
 
         self._log("✅ Login realizado com sucesso")
     # ACESSAR EMISSÃO
@@ -190,7 +259,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
             )
 
             # 🔥 garante que realmente sumiu visualmente
-            time.sleep(1)
+            time.sleep(0.2)
 
         except:
             pass
@@ -233,7 +302,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         self.esperar_elemento_livre(radio_brasil)
 
         driver.execute_script("arguments[0].scrollIntoView({block:'center'});", radio_brasil)
-        time.sleep(0.5)
+        time.sleep(0.2)
 
         driver.execute_script("arguments[0].click();", radio_brasil)
 
@@ -259,7 +328,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
             botao_avancar
         )
 
-        time.sleep(1)
+        time.sleep(0.2)
 
         self.esperar_loading_sumir()
 
@@ -291,7 +360,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
             EC.presence_of_element_located((By.ID, "ServicoPrestado_Descricao"))
         )
         self.esperar_loading_sumir()
-        time.sleep(1)
+        time.sleep(0.2)
 
         # ==========================
         # MUNICÍPIO
@@ -338,7 +407,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
             campo_ctn
         )
 
-        time.sleep(1)
+        time.sleep(0.2)
         campo_ctn.click()
 
         campo_busca = wait.until(
@@ -365,7 +434,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         )
 
         driver.execute_script("arguments[0].click();", radio_nao)
-        time.sleep(1)
+        time.sleep(0.2)
         # ==========================
         # NBS
         # ==========================
@@ -382,7 +451,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
             campo_nbs
         )
 
-        time.sleep(1)
+        time.sleep(0.2)
         campo_nbs.click()
 
         campo_busca = wait.until(
@@ -424,16 +493,18 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         self._log(f"📝 Descrição original: {descricao_original}")
         descricao_limpa = self.limpar_descricao(descricao_original)
         self._log(f"🧹 Descrição limpa: {descricao_limpa}")
+        descricao_nota = self.montar_descricao_nota(descricao_original, dados_nota)
+        self._log(f"🧾 Descrição final da nota: {descricao_nota}")
 
         self._log("✍️ Tentando preencher campo descrição...")
 
         campo_desc.click()
-        time.sleep(1)
+        time.sleep(0.2)
 
         campo_desc.clear()
-        campo_desc.send_keys(descricao_limpa)
+        campo_desc.send_keys(descricao_nota)
 
-        time.sleep(1)
+        time.sleep(0.2)
 
         valor = campo_desc.get_attribute("value")
         self._log(f"📌 Valor no campo após tentativa: '{valor}'")
@@ -453,7 +524,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
             botao_avancar
         )
 
-        time.sleep(1)
+        time.sleep(0.2)
 
         try:
             botao_avancar.click()
@@ -497,7 +568,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         )
 
         campo_valor.click()
-        time.sleep(0.5)
+        time.sleep(0.2)
 
         valor = dados_nota.get("valor", 0)
 
@@ -508,7 +579,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         campo_valor.send_keys(Keys.TAB)
 
         self._log("⏳ Aguardando habilitação dos campos...")
-        time.sleep(1)
+        time.sleep(0.2)
 
         # ==========================
         # EXIGIBILIDADE = NÃO
@@ -552,7 +623,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
             EC.presence_of_element_located((By.ID, "pnlRetencao"))
         )
 
-        time.sleep(1)
+        time.sleep(0.2)
 
 
         # ==========================
@@ -912,6 +983,12 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
     def emitir_nota(self, dados_nota: dict, contexto: dict) -> dict:
 
         item = str(dados_nota.get("item", "")).strip()
+        dados_nota = {
+            **dados_nota,
+            "competencia_mes": contexto.get("mes", ""),
+            "competencia_ano": contexto.get("ano", ""),
+            "municipio": contexto.get("municipio", dados_nota.get("municipio", "")),
+        }
 
         self._log(f"Iniciando emissão do ITEM {item}")
 
@@ -1038,7 +1115,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         self._log("Voltando para Página 2...")
 
         self.voltar_para_pagina_3()
-        time.sleep(1)
+        time.sleep(0.2)
         self.voltar_para_pagina_3()
 
         self._log("Retornou para Página 2.")

@@ -1,0 +1,17 @@
+[Unit]
+Description=MBS Fiscal Portal (FastAPI/Uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/mbsduodigital/emissor_nf
+EnvironmentFile=/var/www/mbsduodigital/emissor_nf/.env
+ExecStart=/var/www/mbsduodigital/emissor_nf/.venv/bin/python -m uvicorn billing_site.app:app --host 127.0.0.1 --port 8765 --proxy-headers
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

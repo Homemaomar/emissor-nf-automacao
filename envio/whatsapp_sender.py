@@ -1,18 +1,17 @@
-import time
 import os
+import time
 import urllib.parse
+import ctypes
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 class WhatsAppSender:
-
     def __init__(self, log_callback=None):
         self.log = log_callback or print
         self.driver = None
@@ -21,65 +20,63 @@ class WhatsAppSender:
     # INICIAR WHATSAPP
     # ==========================================
     def iniciar(self):
+        profile_path = r"C:\WhatsAppProfile"
+
+        if not os.path.exists(profile_path):
+            os.makedirs(profile_path)
 
         options = Options()
-        options.add_argument(r"--user-data-dir=C:\AutomaçãoNotaFiscal\chrome_profile")
+        options.add_argument(f"--user-data-dir={profile_path}")
+        options.add_argument("--profile-directory=Default")
+        options.add_argument("--disable-blink-features=AutomationControlled")
 
         self.driver = webdriver.Chrome(options=options)
         self.driver.get("https://web.whatsapp.com")
 
-        self.log("📱 Inicializando WhatsApp Web...")
+        self.log("Abrindo WhatsApp Web...")
 
-        wait = WebDriverWait(self.driver, 60)
+        wait = WebDriverWait(self.driver, 120)
 
         try:
             wait.until(
                 EC.presence_of_element_located((By.XPATH, "//div[@id='pane-side']"))
             )
-            self.log("✅ WhatsApp conectado automaticamente!")
-
-        except:
-            self.log("⚠️ Escaneie o QR Code...")
-
+            self.log("WhatsApp ja esta logado.")
+        except Exception:
+            self.log("Escaneie o QR Code...")
+            wait.until(EC.presence_of_element_located((By.XPATH, "//canvas")))
             wait.until(
                 EC.presence_of_element_located((By.XPATH, "//div[@id='pane-side']"))
             )
-
-            self.log("✅ WhatsApp conectado!")
+            self.log("WhatsApp conectado apos QR.")
 
     # ==========================================
-    # ENVIAR MENSAGEM (ABRE CONVERSA)
+    # ENVIAR MENSAGEM
     # ==========================================
     def enviar(self, numero, mensagem, timeout=30):
-
         if not self.driver:
-            raise Exception("Driver não iniciado. Chame iniciar() primeiro.")
+            raise Exception("Driver nao iniciado. Chame iniciar() primeiro.")
 
         wait = WebDriverWait(self.driver, timeout)
 
         try:
-            self.log("\n==============================")
-            self.log("📤 ENVIANDO MENSAGEM WHATSAPP")
+            self.log("==============================")
+            self.log("ENVIANDO MENSAGEM WHATSAPP")
             self.log("==============================")
 
-            # NORMALIZAR NÚMERO
             numero = str(numero).strip()
             numero = numero.split(".")[0]
-            numero = ''.join(filter(str.isdigit, numero))
+            numero = "".join(filter(str.isdigit, numero))
 
             if len(numero) < 10:
-                raise Exception(f"Número inválido: {numero}")
+                raise Exception(f"Numero invalido: {numero}")
 
-            self.log(f"📞 Número: {numero}")
+            self.log(f"Numero: {numero}")
 
-            # ENCODE DA MENSAGEM
             mensagem_codificada = urllib.parse.quote(mensagem)
-
-            # ABRIR CONVERSA
             url = f"https://web.whatsapp.com/send?phone=55{numero}&text={mensagem_codificada}"
             self.driver.get(url)
 
-            # AGUARDAR CAMPO
             campo = wait.until(
                 EC.presence_of_element_located(
                     (By.XPATH, "//div[@contenteditable='true']")
@@ -87,124 +84,89 @@ class WhatsAppSender:
             )
 
             time.sleep(1)
-
-            # ENVIAR MENSAGEM
             campo.send_keys(Keys.ENTER)
 
-            self.log("✅ Mensagem enviada!")
-
+            self.log("Mensagem enviada.")
             time.sleep(1)
-
             return True
 
-        except Exception as e:
-            self.log(f"❌ Erro ao enviar mensagem: {e}")
+        except Exception as exc:
+            self.log(f"Erro ao enviar mensagem: {exc}")
             return False
 
-    # ==========================================
-    # ENVIAR ARQUIVO (NA CONVERSA ABERTA)
-    # ==========================================
-    def enviar_arquivo(self, caminho_arquivo, timeout=40):
+    def _abrir_menu_anexo(self, wait):
+        botao_mais = wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, "//span[@data-icon='plus-rounded']")
+            )
+        )
+        botao_mais.click()
 
+    def _clicar_documento(self, wait):
+        botao_documento = wait.until(
+            EC.presence_of_element_located((By.XPATH, "//span[text()='Documento']"))
+        )
+        self.driver.execute_script("arguments[0].click();", botao_documento)
+
+    def _mapear_novo_input(self):
+        return self.driver.find_elements(By.XPATH, "//input[@type='file']")
+
+    def _fechar_dialogo_abrir_windows(self):
+        try:
+            user32 = ctypes.windll.user32
+            hwnd = user32.FindWindowW("#32770", "Abrir")
+            if hwnd:
+                user32.PostMessageW(hwnd, 0x0010, 0, 0)
+                time.sleep(0.5)
+        except Exception:
+            pass
+
+    # ==========================================
+    # ENVIAR ARQUIVOS
+    # ==========================================
+    def enviar_multiplos_arquivos(self, caminhos_arquivos, timeout=40):
         wait = WebDriverWait(self.driver, timeout)
 
         try:
-            self.log("📎 Enviando arquivo...")
+            self.log("Enviando arquivos em lote...")
 
-            if not os.path.exists(caminho_arquivo):
-                raise Exception(f"Arquivo não encontrado: {caminho_arquivo}")
+            arquivos_validos = [c for c in caminhos_arquivos if os.path.exists(c)]
+            if not arquivos_validos:
+                raise Exception("Nenhum arquivo valido")
 
-            # =========================
-            # 1. MAPEAR INPUTS ANTES
-            # =========================
-            inputs_antes = self.driver.find_elements(By.XPATH, "//input[@type='file']")
-            self.log(f"🔍 Inputs antes: {len(inputs_antes)}")
+            for caminho_arquivo in arquivos_validos:
+                self.log(f"Enviando: {caminho_arquivo}")
 
-            # =========================
-            # 2. CLICAR NO "+"
-            # =========================
-            botao_mais = wait.until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "//span[@data-icon='plus-rounded']")
-                )
-            )
-            botao_mais.click()
-
-            # =========================
-            # 3. CLICAR EM DOCUMENTO (JS pra evitar travamento)
-            # =========================
-            botao_documento = wait.until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//span[text()='Documento']")
-                )
-            )
-
-            self.driver.execute_script("arguments[0].click();", botao_documento)
-
-            time.sleep(1)
-
-            # =========================
-            # 4. MAPEAR INPUTS DEPOIS
-            # =========================
-            inputs_depois = self.driver.find_elements(By.XPATH, "//input[@type='file']")
-            self.log(f"🔍 Inputs depois: {len(inputs_depois)}")
-
-            # =========================
-            # 5. IDENTIFICAR NOVO INPUT
-            # =========================
-            novos_inputs = [i for i in inputs_depois if i not in inputs_antes]
-
-            if not novos_inputs:
-                raise Exception("❌ Novo input não encontrado")
-
-            input_file = novos_inputs[0]
-
-            # =========================
-            # 6. LOG DETALHADO DOS INPUTS
-            # =========================
-            for i, inp in enumerate(inputs_depois):
-                try:
-                    accept = inp.get_attribute("accept")
-                    visible = inp.is_displayed()
-                    self.log(f"Input {i} → accept: {accept} | visível: {visible}")
-                except:
-                    self.log(f"Input {i} → erro ao inspecionar")
-
-            self.log(f"✅ INPUT ESCOLHIDO: index {inputs_depois.index(input_file)}")
-
-            # =========================
-            # 7. ENVIAR ARQUIVO
-            # =========================
-            self.log(f"📤 Upload: {caminho_arquivo}")
-            input_file.send_keys(caminho_arquivo)
-
-            # =========================
-            # 8. AGUARDAR BOTÃO ENVIAR
-            # =========================
-            botao_enviar = wait.until(
-                EC.element_to_be_clickable(
-                    (By.XPATH, "//span[@data-icon='wds-ic-send-filled']")
-                )
-            )
-
-            botao_enviar.click()
-
-            self.log("📨 Arquivo enviado com sucesso!")
-
-            # =========================
-            # 9. FECHAR POSSÍVEL POPUP WINDOWS
-            # =========================
-            try:
-                import pyautogui
+                inputs_antes = self._mapear_novo_input()
+                self._abrir_menu_anexo(wait)
+                self._clicar_documento(wait)
                 time.sleep(1)
-                pyautogui.press("esc")
-            except:
-                pass
+
+                inputs_depois = self._mapear_novo_input()
+                novos_inputs = [inp for inp in inputs_depois if inp not in inputs_antes]
+
+                if not novos_inputs:
+                    raise Exception("Novo input de documento nao encontrado")
+
+                input_file = novos_inputs[0]
+                input_file.send_keys(caminho_arquivo)
+                self._fechar_dialogo_abrir_windows()
+
+                botao_enviar = wait.until(
+                    EC.element_to_be_clickable(
+                        (By.XPATH, "//span[@data-icon='wds-ic-send-filled']")
+                    )
+                )
+                botao_enviar.click()
+                self._fechar_dialogo_abrir_windows()
+
+                self.log(f"Arquivo enviado: {caminho_arquivo}")
+                time.sleep(2)
 
             return True
 
-        except Exception as e:
-            self.log(f"❌ Erro ao enviar arquivo: {e}")
+        except Exception as exc:
+            self.log(f"Erro no envio em lote: {exc}")
             return False
 
     # ==========================================
@@ -212,8 +174,12 @@ class WhatsAppSender:
     # ==========================================
     def finalizar(self):
         try:
-            self.log("🔚 Finalizando WhatsApp...")
+            self.log("Finalizando WhatsApp...")
             if self.driver:
                 self.driver.quit()
-        except Exception as e:
-            self.log(f"Erro ao finalizar: {e}")
+        except Exception as exc:
+            self.log(f"Erro ao finalizar: {exc}")
+
+    def _dividir_em_lotes(self, lista, tamanho_lote=10):
+        for i in range(0, len(lista), tamanho_lote):
+            yield lista[i:i + tamanho_lote]

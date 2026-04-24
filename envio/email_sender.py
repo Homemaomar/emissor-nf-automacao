@@ -15,12 +15,14 @@ class EmailSender:
         smtp_password: str,
         remetente_nome: str = "Setor Fiscal",
         use_tls: bool = True,
-        log_callback=None
+        log_callback=None,
     ):
         self.smtp_host = smtp_host
         self.smtp_port = smtp_port
-        self.smtp_user = smtp_user
-        self.smtp_password = smtp_password
+        self.smtp_user = str(smtp_user or "").strip()
+        self.smtp_password = (
+            str(smtp_password or "").strip().replace(" ", "").replace("-", "")
+        )
         self.remetente_nome = remetente_nome
         self.use_tls = use_tls
         self.log = log_callback or print
@@ -32,54 +34,78 @@ class EmailSender:
         cliente = notas[0].cliente if notas else "Cliente"
         return f"NFS-e(s) - {cliente} - {len(notas)} documento(s)"
 
-    def _montar_corpo(self, notas: List[NotaEnvio]) -> str:
+    def _resumir_especies(self, notas: List[NotaEnvio]) -> str:
+        especies = []
+        vistos = set()
 
-        primeira = notas[0]
+        for nota in notas:
+            especie = str(getattr(nota, "especie", "") or "").strip()
+            if not especie:
+                continue
+            chave = especie.lower()
+            if chave in vistos:
+                continue
+            vistos.add(chave)
+            especies.append(especie.upper())
 
-        nome_contato = primeira.nome_contato or "Prezado(a)"
-        especie = primeira.especie or "serviços"
-        municipio = getattr(primeira, "municipio", "")
-        
-        # tenta extrair mês/ano da data_emissao (se existir)
-        data = getattr(primeira, "data_emissao", "")
-        mes = ""
-        ano = ""
+        if not especies:
+            return "SERVICOS"
+        if len(especies) == 1:
+            return especies[0]
+        return " e ".join(especies)
 
-        if data and "/" in data:
-            try:
-                partes = data.split("/")
-                mes = partes[1]
-                ano = partes[2]
-            except:
-                pass
+    def _extrair_periodo(self, notas: List[NotaEnvio]) -> str:
+        for nota in notas:
+            mes = str(getattr(nota, "mes", "") or "").strip()
+            if " - " in mes:
+                mes = mes.split(" - ", 1)[1].strip()
+            elif mes[:2].isdigit() and len(mes) > 3:
+                mes = mes[3:].strip()
 
-        linhas = []
+            if mes:
+                return mes.upper()
 
-        # Saudação
-        linhas.append(f"Olá {nome_contato},\n")
+            caminho_pdf = str(getattr(nota, "caminho_pdf", "") or "")
+            partes = [p for p in caminho_pdf.replace("/", "\\").split("\\") if p]
+            for parte in partes:
+                texto = parte.strip()
+                if len(texto) > 4 and texto[:2].isdigit() and " - " in texto:
+                    return texto.split(" - ", 1)[1].strip().upper()
 
-        # Introdução profissional
-        linhas.append(
-            f"Segue(m) em anexo a(s) nota(s) fiscal(is) de prestação de serviços "
-            f"referente a {especie}, do período {mes}/{ano}, "
-            f"do município de {municipio}.\n"
+        return ""
+
+    def montar_descricao_compartilhada(self, notas: List[NotaEnvio]) -> str:
+        especies = self._resumir_especies(notas)
+        periodo = self._extrair_periodo(notas)
+
+        descricao = (
+            f"Segue(m) em anexo a(s) nota(s) fiscal(is) de prestacao de servicos "
+            f"referente a {especies}."
         )
 
-        # Detalhamento
+        if periodo:
+            descricao = f"{descricao} PERIODO: {periodo}."
+
+        return descricao
+
+    def _montar_corpo(self, notas: List[NotaEnvio]) -> str:
+        primeira = notas[0]
+        nome_contato = primeira.nome_contato or "Prezado(a)"
+
+        linhas = []
+        linhas.append(f"Ola {nome_contato},\n")
+        linhas.append(f"{self.montar_descricao_compartilhada(notas)}\n")
         linhas.append("Detalhamento das notas:\n")
 
         for nota in notas:
             numero = getattr(nota, "numero_nfse", "") or "N/I"
             valor = getattr(nota, "valor", 0) or 0
+            valor_formatado = (
+                f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            )
+            linhas.append(f"- Nota N {numero} | Valor: R$ {valor_formatado}")
 
-            valor_formatado = f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-            linhas.append(f"• Nota Nº {numero} | Valor: R$ {valor_formatado}")
-
-        # Complemento
-        linhas.append("\nCaso haja qualquer divergência, por gentileza entrar em contato.\n")
-
-        # Rodapé
+        linhas.append("\nCaso haja qualquer divergencia, por gentileza entrar em contato.\n")
         linhas.append("Atenciosamente,")
         linhas.append(self.remetente_nome)
 
@@ -94,12 +120,11 @@ class EmailSender:
             msg.set_content(self._montar_corpo(notas))
 
             anexados = 0
-
             for nota in notas:
                 for caminho in [nota.caminho_pdf, nota.caminho_xml]:
                     if caminho and os.path.exists(caminho):
-                        with open(caminho, "rb") as f:
-                            dados = f.read()
+                        with open(caminho, "rb") as arquivo:
+                            dados = arquivo.read()
 
                         nome_arquivo = os.path.basename(caminho)
                         maintype = "application"
@@ -114,11 +139,13 @@ class EmailSender:
                             dados,
                             maintype=maintype,
                             subtype=subtype,
-                            filename=nome_arquivo
+                            filename=nome_arquivo,
                         )
                         anexados += 1
 
-            self.log(f"📧 Enviando email para {destino} com {len(notas)} nota(s) e {anexados} anexo(s)...")
+            self.log(
+                f"📧 Enviando email para {destino} com {len(notas)} nota(s) e {anexados} anexo(s)..."
+            )
 
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
                 if self.use_tls:
@@ -129,12 +156,11 @@ class EmailSender:
             return ResultadoEnvio(
                 sucesso=True,
                 mensagem=f"E-mail enviado para {destino}",
-                protocolo=f"EMAIL-{destino}"
+                protocolo=f"EMAIL-{destino}",
             )
-
-        except Exception as e:
+        except Exception as exc:
             return ResultadoEnvio(
                 sucesso=False,
-                mensagem=f"Erro ao enviar e-mail para {destino}: {e}",
-                protocolo=""
+                mensagem=f"Erro ao enviar e-mail para {destino}: {exc}",
+                protocolo="",
             )

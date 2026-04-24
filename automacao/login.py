@@ -4,8 +4,14 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
+def realizar_login(driver, inscricao, senha):
+    inscricao = str(inscricao or "").strip()
+    senha = str(senha or "").strip()
 
-def realizar_login(driver):
+    if not inscricao or not senha:
+        raise ValueError(
+            "Credenciais da prefeitura nao configuradas. Atualize login e senha nas configuracoes antes de emitir."
+        )
 
     wait = WebDriverWait(driver, 5)
 
@@ -17,12 +23,12 @@ def realizar_login(driver):
     )
 
     campo_cnpj.clear()
-    campo_cnpj.send_keys("04494106000140")
+    campo_cnpj.send_keys(inscricao)
 
     # campo senha
     campo_senha = driver.find_element(By.ID, "Senha")
     campo_senha.clear()
-    campo_senha.send_keys("Servitec01")
+    campo_senha.send_keys(senha)
 
     # pequeno delay para JS do site
     time.sleep(2)
