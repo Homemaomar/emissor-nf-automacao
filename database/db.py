@@ -402,6 +402,11 @@ def criar_banco():
     _ensure_column(cursor, "config", "notification_email", "TEXT DEFAULT ''")
     _ensure_column(cursor, "config", "smtp_sender_email", "TEXT DEFAULT ''")
     _ensure_column(cursor, "config", "smtp_sender_password", "TEXT DEFAULT ''")
+    _ensure_column(cursor, "config", "mp_environment", "TEXT DEFAULT 'sandbox'")
+    _ensure_column(cursor, "config", "mp_public_key_test", "TEXT DEFAULT ''")
+    _ensure_column(cursor, "config", "mp_access_token_test", "TEXT DEFAULT ''")
+    _ensure_column(cursor, "config", "mp_public_key_prod", "TEXT DEFAULT ''")
+    _ensure_column(cursor, "config", "mp_access_token_prod", "TEXT DEFAULT ''")
     _ensure_column(cursor, "usuarios", "approval_status", "TEXT DEFAULT 'approved'")
     _ensure_column(cursor, "usuarios", "approved_by", "INTEGER")
     _ensure_column(cursor, "usuarios", "approved_at", "TEXT")
@@ -442,6 +447,11 @@ def salvar_config(
     notification_email="",
     smtp_sender_email="",
     smtp_sender_password="",
+    mp_environment="sandbox",
+    mp_public_key_test="",
+    mp_access_token_test="",
+    mp_public_key_prod="",
+    mp_access_token_prod="",
 ):
     conn = _connect()
     cursor = conn.cursor()
@@ -456,9 +466,14 @@ def salvar_config(
             recurrence_frequency,
             notification_email,
             smtp_sender_email,
-            smtp_sender_password
+            smtp_sender_password,
+            mp_environment,
+            mp_public_key_test,
+            mp_access_token_test,
+            mp_public_key_prod,
+            mp_access_token_prod
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             caminho_base,
@@ -469,6 +484,11 @@ def salvar_config(
             notification_email,
             smtp_sender_email,
             smtp_sender_password,
+            str(mp_environment or "sandbox").strip().lower() or "sandbox",
+            str(mp_public_key_test or "").strip(),
+            str(mp_access_token_test or "").strip(),
+            str(mp_public_key_prod or "").strip(),
+            str(mp_access_token_prod or "").strip(),
         ),
     )
     conn.commit()
@@ -488,7 +508,12 @@ def carregar_config():
             COALESCE(recurrence_frequency, 'manual'),
             COALESCE(notification_email, ''),
             COALESCE(smtp_sender_email, ''),
-            COALESCE(smtp_sender_password, '')
+            COALESCE(smtp_sender_password, ''),
+            COALESCE(mp_environment, 'sandbox'),
+            COALESCE(mp_public_key_test, ''),
+            COALESCE(mp_access_token_test, ''),
+            COALESCE(mp_public_key_prod, ''),
+            COALESCE(mp_access_token_prod, '')
         FROM config
         LIMIT 1
         """
@@ -506,6 +531,11 @@ def carregar_config():
             "notification_email": row[5] or "",
             "smtp_sender_email": row[6] or "",
             "smtp_sender_password": row[7] or "",
+            "mp_environment": row[8] or "sandbox",
+            "mp_public_key_test": row[9] or "",
+            "mp_access_token_test": row[10] or "",
+            "mp_public_key_prod": row[11] or "",
+            "mp_access_token_prod": row[12] or "",
         }
 
     return {
@@ -517,6 +547,11 @@ def carregar_config():
         "notification_email": "",
         "smtp_sender_email": "",
         "smtp_sender_password": "",
+        "mp_environment": "sandbox",
+        "mp_public_key_test": "",
+        "mp_access_token_test": "",
+        "mp_public_key_prod": "",
+        "mp_access_token_prod": "",
     }
 
 

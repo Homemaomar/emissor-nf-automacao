@@ -20,9 +20,12 @@ from database.db import (
     autenticar_cliente_portal,
     autenticar_usuario,
     avaliar_status_cobranca,
+    carregar_config,
     confirmar_pagamento_portal,
+    contar_usuarios,
     criar_banco,
     criar_cliente_portal,
+    criar_usuario,
     gerar_cobranca_mensal_atual,
     iniciar_checkout_portal,
     listar_assinaturas_portal,
@@ -34,6 +37,7 @@ from database.db import (
     obter_checkout_portal,
     obter_cliente_portal,
     obter_metricas_portal,
+    salvar_config,
     salvar_assinatura_sistema,
 )
 
@@ -103,11 +107,16 @@ def _require_admin(request: Request):
     return admin
 
 
+def _admin_bootstrap_needed():
+    return contar_usuarios() == 0
+
+
 def _render_nav(cliente=None, admin=None):
     if admin:
         admin_links = '<a href="/admin" class="primary">Admin</a><a href="/admin/logout">Sair do admin</a>'
     else:
-        admin_links = '<a href="/admin/login">Admin</a>'
+        admin_destino = "/admin/bootstrap" if _admin_bootstrap_needed() else "/admin/login"
+        admin_links = f'<a href="{admin_destino}">Admin</a>'
     cliente_links = (
         '<a href="/portal" class="primary">Area do usuario</a>'
         '<a href="/logout">Sair</a>'
@@ -534,9 +543,38 @@ def _render_admin_login(request: Request, erro=""):
     return _layout(conteudo, titulo="Admin login", erro=erro)
 
 
+def _render_admin_bootstrap(request: Request, erro=""):
+    cliente = _cliente_logado(request)
+    admin = _admin_logado(request)
+    conteudo = f"""
+    {_render_nav(cliente, admin)}
+    <section class="grid">
+      <article class="card span-7">
+        <h1 style="font-size:34px;margin-bottom:10px;">Criar administrador inicial</h1>
+        <p class="subtitle">Como esta e a primeira configuracao do portal, crie agora o administrador principal que vai acessar o CRM, o painel de cobranca e as integracoes comerciais.</p>
+        <form method="post" action="/admin/bootstrap">
+          <label>Nome completo<input type="text" name="nome" required></label>
+          <label>Email de acesso<input type="email" name="username" required></label>
+          <div class="form-grid">
+            <label>Senha<input type="password" name="password" required></label>
+            <label>Confirmar senha<input type="password" name="password_confirm" required></label>
+          </div>
+          <div class="actions"><button class="btn-primary" type="submit">Criar administrador inicial</button></div>
+        </form>
+      </article>
+      <article class="card span-5">
+        <h2 class="section-title">Instalacao inicial</h2>
+        <div class="small">Essa etapa so aparece enquanto nao existir nenhum usuario do sistema. Depois do primeiro administrador criado, o acesso volta a ser feito pela tela normal de login administrativo.</div>
+      </article>
+    </section>
+    """
+    return _layout(conteudo, titulo="Criar administrador inicial", erro=erro)
+
+
 def _render_admin(request: Request, admin_user, mensagem="", erro=""):
     cliente = _cliente_logado(request)
     assinatura = obter_assinatura_sistema() or {}
+    config = carregar_config()
     cobrancas = listar_cobrancas_mensais(limit=18)
     metricas = obter_metricas_portal()
     assinaturas_portal = listar_assinaturas_portal(limit=40)
@@ -605,6 +643,38 @@ Portal comercial:
 
 Admin:
 {_base_url()}/admin</div>
+      </article>
+    </section>
+    <section class="grid">
+      <article class="card span-12">
+        <div class="status-line">
+          <div>
+            <h2 class="section-title" style="margin:0;">Mercado Pago</h2>
+            <p class="subtitle" style="margin:8px 0 0;">Credenciais separadas por ambiente para ativar checkout real com seguranca. Esse bloco fica restrito ao administrador do sistema.</p>
+          </div>
+          <span class="badge info">{escape('Sandbox' if str(config.get('mp_environment', 'sandbox')).lower() == 'sandbox' else 'Producao')}</span>
+        </div>
+        <form method="post" action="/integracoes/mercadopago/salvar">
+          <div class="form-grid">
+            <label>Ambiente ativo
+              <select name="mp_environment">
+                <option value="sandbox" {'selected' if str(config.get('mp_environment', 'sandbox')).lower() == 'sandbox' else ''}>Sandbox / Teste</option>
+                <option value="production" {'selected' if str(config.get('mp_environment', 'sandbox')).lower() == 'production' else ''}>Producao</option>
+              </select>
+            </label>
+            <div></div>
+          </div>
+          <div class="form-grid">
+            <label>Public Key de teste<input type="text" name="mp_public_key_test" value="{escape(config.get('mp_public_key_test', ''))}" placeholder="TEST-..."></label>
+            <label>Access Token de teste<input type="password" name="mp_access_token_test" value="{escape(config.get('mp_access_token_test', ''))}" placeholder="TEST-..."></label>
+            <label>Public Key de producao<input type="text" name="mp_public_key_prod" value="{escape(config.get('mp_public_key_prod', ''))}" placeholder="APP_USR-..."></label>
+            <label>Access Token de producao<input type="password" name="mp_access_token_prod" value="{escape(config.get('mp_access_token_prod', ''))}" placeholder="APP_USR-..."></label>
+          </div>
+          <div class="small">Use primeiro as credenciais de teste do Mercado Pago. Quando a validacao do checkout estiver pronta, troque o ambiente ativo para producao.</div>
+          <div class="actions">
+            <button class="btn-primary" type="submit">Salvar credenciais do Mercado Pago</button>
+          </div>
+        </form>
       </article>
     </section>
     <section class="grid">
@@ -687,14 +757,25 @@ def portal_page(request: Request, msg: str = "", err: str = ""):
 
 @app.get("/admin/login", response_class=HTMLResponse)
 def admin_login_page(request: Request, err: str = ""):
+    if _admin_bootstrap_needed():
+        return _redirect("/admin/bootstrap")
     admin = _require_admin(request)
     if admin:
         return _redirect("/admin")
     return _html(_render_admin_login(request, err))
 
 
+@app.get("/admin/bootstrap", response_class=HTMLResponse)
+def admin_bootstrap_page(request: Request, err: str = ""):
+    if not _admin_bootstrap_needed():
+        return _redirect("/admin/login")
+    return _html(_render_admin_bootstrap(request, err))
+
+
 @app.get("/admin", response_class=HTMLResponse)
 def admin_page(request: Request, msg: str = "", err: str = ""):
+    if _admin_bootstrap_needed():
+        return _redirect("/admin/bootstrap")
     admin = _require_admin(request)
     if not admin:
         return _redirect("/admin/login?err=" + urlencode({"": "Entre com um administrador para acessar o painel."})[1:])
@@ -786,6 +867,8 @@ def auth_register(
 
 @app.post("/admin/login")
 def admin_login(username: str = Form(""), password: str = Form("")):
+    if _admin_bootstrap_needed():
+        return _redirect("/admin/bootstrap")
     resultado = autenticar_usuario(username, password)
     if not resultado.get("ok"):
         return _redirect("/admin/login?" + urlencode({"err": "Credenciais administrativas invalidas ou acesso sem permissao."}))
@@ -797,6 +880,24 @@ def admin_login(username: str = Form(""), password: str = Form("")):
     response = _redirect("/admin")
     _set_cookie(response, "portal_admin_session", token)
     return response
+
+
+@app.post("/admin/bootstrap")
+def admin_bootstrap(
+    nome: str = Form(""),
+    username: str = Form(""),
+    password: str = Form(""),
+    password_confirm: str = Form(""),
+):
+    if not _admin_bootstrap_needed():
+        return _redirect("/admin/login")
+    if password != password_confirm:
+        return _redirect("/admin/bootstrap?" + urlencode({"err": "As senhas nao conferem."}))
+    try:
+        criar_usuario(nome=nome, username=username, password=password, role="admin")
+    except ValueError as exc:
+        return _redirect("/admin/bootstrap?" + urlencode({"err": str(exc)}))
+    return _redirect("/admin/login?" + urlencode({"err": "Administrador inicial criado. Entre com as novas credenciais."}))
 
 
 @app.post("/checkout/iniciar")
@@ -889,6 +990,36 @@ def cobrancas_status(
         payment_method=payment_method,
     )
     return _redirect("/admin?" + urlencode({"msg": "Status da cobranca atualizado."}))
+
+
+@app.post("/integracoes/mercadopago/salvar")
+def salvar_mercadopago(
+    request: Request,
+    mp_environment: str = Form("sandbox"),
+    mp_public_key_test: str = Form(""),
+    mp_access_token_test: str = Form(""),
+    mp_public_key_prod: str = Form(""),
+    mp_access_token_prod: str = Form(""),
+):
+    if not _require_admin(request):
+        return _redirect("/admin/login?err=" + urlencode({"": "Entre com um administrador para continuar."})[1:])
+    config = carregar_config()
+    salvar_config(
+        caminho_base=config.get("caminho_base", ""),
+        login=config.get("login", ""),
+        senha=config.get("senha", ""),
+        recurrence_enabled=config.get("recurrence_enabled", False),
+        recurrence_frequency=config.get("recurrence_frequency", "manual"),
+        notification_email=config.get("notification_email", ""),
+        smtp_sender_email=config.get("smtp_sender_email", ""),
+        smtp_sender_password=config.get("smtp_sender_password", ""),
+        mp_environment=mp_environment,
+        mp_public_key_test=mp_public_key_test,
+        mp_access_token_test=mp_access_token_test,
+        mp_public_key_prod=mp_public_key_prod,
+        mp_access_token_prod=mp_access_token_prod,
+    )
+    return _redirect("/admin?" + urlencode({"msg": "Credenciais do Mercado Pago salvas com sucesso."}))
 
 
 if __name__ == "__main__":
