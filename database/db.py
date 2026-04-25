@@ -407,6 +407,7 @@ def criar_banco():
     _ensure_column(cursor, "config", "mp_access_token_test", "TEXT DEFAULT ''")
     _ensure_column(cursor, "config", "mp_public_key_prod", "TEXT DEFAULT ''")
     _ensure_column(cursor, "config", "mp_access_token_prod", "TEXT DEFAULT ''")
+    _ensure_column(cursor, "portal_cobrancas", "gateway_checkout_url", "TEXT DEFAULT ''")
     _ensure_column(cursor, "usuarios", "approval_status", "TEXT DEFAULT 'approved'")
     _ensure_column(cursor, "usuarios", "approved_by", "INTEGER")
     _ensure_column(cursor, "usuarios", "approved_at", "TEXT")
@@ -1267,6 +1268,41 @@ def atualizar_checkout_portal_status(
             status_normalizado,
             agora,
             int(cobranca["assinatura_id"]),
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def atualizar_checkout_portal_gateway(
+    cobranca_id,
+    payment_method="",
+    external_ref="",
+    gateway_checkout_url="",
+):
+    cobranca = obter_checkout_portal(cobranca_id)
+    if not cobranca:
+        raise ValueError("Checkout nao encontrado.")
+
+    agora = _utc_now_iso()
+    conn = _connect()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE portal_cobrancas
+        SET
+            payment_method = ?,
+            external_ref = ?,
+            gateway_checkout_url = ?,
+            updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            str(payment_method or cobranca.get("payment_method") or "").strip().lower(),
+            str(external_ref or "").strip(),
+            str(gateway_checkout_url or "").strip(),
+            agora,
+            int(cobranca_id),
         ),
     )
     conn.commit()
