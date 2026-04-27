@@ -29,6 +29,12 @@ PLANS_DEFAULT = (
         "valor_mensal": 280.0,
         "recursos": ["emissao_nfse", "envio_email", "envio_whatsapp"],
     },
+    {
+        "code": "teste_mp",
+        "nome": "Teste Mercado Pago",
+        "valor_mensal": 1.0,
+        "recursos": ["validacao_pagamento"],
+    },
 )
 BILLING_ACTIVE_STATUSES = {"trial", "active", "paid", "development"}
 BILLING_BLOCKED_STATUSES = {"blocked", "suspended", "cancelled"}
@@ -969,6 +975,37 @@ def obter_cliente_portal(cliente_id):
         LIMIT 1
         """,
         (int(cliente_id),),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+
+def obter_cliente_portal_por_email(email):
+    email = _normalizar_email(email)
+    if not email:
+        return None
+
+    conn = _connect()
+    conn.row_factory = _dict_factory
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT
+            id,
+            nome,
+            email,
+            telefone,
+            documento,
+            endereco,
+            ativo,
+            created_at,
+            last_login_at
+        FROM portal_clientes
+        WHERE email = ?
+        LIMIT 1
+        """,
+        (email,),
     )
     row = cursor.fetchone()
     conn.close()

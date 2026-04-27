@@ -42,6 +42,7 @@ from database.db import (
     obter_assinatura_sistema,
     obter_checkout_portal,
     obter_cliente_portal,
+    obter_cliente_portal_por_email,
     obter_metricas_portal,
     salvar_config,
     salvar_assinatura_sistema,
@@ -55,6 +56,8 @@ SECURE_COOKIES = os.environ.get("BILLING_SITE_SECURE_COOKIES", "0").strip() in {
 
 CLIENT_SESSIONS = {}
 ADMIN_SESSIONS = {}
+TEST_BUYER_EMAIL = "comprador@testuser.com"
+TEST_BUYER_PASSWORD = "1234"
 
 app = FastAPI(title="MBS Fiscal Portal", docs_url=None, redoc_url=None)
 
@@ -99,6 +102,17 @@ def _clear_cookie(response: RedirectResponse, name: str):
         httponly=True,
         samesite="lax",
         secure=SECURE_COOKIES,
+    )
+
+
+def _ensure_test_buyer():
+    cliente = obter_cliente_portal_por_email(TEST_BUYER_EMAIL)
+    if cliente:
+        return cliente
+    return criar_cliente_portal(
+        nome="Comprador Teste",
+        email=TEST_BUYER_EMAIL,
+        password=TEST_BUYER_PASSWORD,
     )
 
 
@@ -226,8 +240,51 @@ def _mercadopago_criar_assinatura(checkout):
     return _mercadopago_request("POST", "/preapproval", payload)
 
 
+def _mercadopago_criar_pagamento_unico(checkout):
+    cfg = _mercadopago_config()
+    payer_email = str(checkout.get("cliente_email") or "").strip().lower()
+    if cfg["environment"] == "sandbox" and not payer_email.endswith("@testuser.com"):
+        raise ValueError(
+            "No ambiente de teste do Mercado Pago, o checkout precisa usar um comprador de teste com email terminando em @testuser.com."
+        )
+    retorno = f"{_base_url()}/checkout/mercadopago/retorno?checkout_id={int(checkout.get('id', 0))}"
+    payload = {
+        "items": [
+            {
+                "id": str(checkout.get("plano_code") or checkout.get("id") or "plano"),
+                "title": f"{checkout.get('plano_nome') or 'Plano MBS Fiscal'}",
+                "description": "Contratacao do plano MBS Fiscal",
+                "quantity": 1,
+                "currency_id": "BRL",
+                "unit_price": float(checkout.get("valor", 0) or 0),
+            }
+        ],
+        "payer": {"email": payer_email},
+        "external_reference": str(checkout.get("id")),
+        "back_urls": {
+            "success": retorno,
+            "failure": retorno,
+            "pending": retorno,
+        },
+        "payment_methods": {
+            "default_payment_method_id": "pix",
+            "excluded_payment_types": [
+                {"id": "credit_card"},
+                {"id": "debit_card"},
+                {"id": "ticket"},
+            ],
+            "installments": 1,
+        },
+    }
+    return _mercadopago_request("POST", "/checkout/preferences", payload)
+
+
 def _mercadopago_obter_assinatura(preapproval_id: str):
     return _mercadopago_request("GET", f"/preapproval/{preapproval_id}")
+
+
+def _mercadopago_obter_pagamento(payment_id: str):
+    return _mercadopago_request("GET", f"/v1/payments/{payment_id}")
 
 
 def _is_mercadopago_checkout(checkout):
@@ -361,8 +418,27 @@ def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
           <div class="small">{escape(_fmt_money(plano.get('valor_mensal', 0)))} por mes</div>
         </div>
         """
+    admin_test_action = ""
+    if admin and plano:
+        if _mercadopago_config()["environment"] == "sandbox":
+            admin_test_action = f"""
+            <div class="checkout-option" style="margin-bottom:16px;">
+              <div class="small"><strong>Voce esta no painel administrativo.</strong> Para testar no sandbox, entre como cliente de teste do portal.</div>
+              <form method="post" action="/admin/testar-como-cliente" style="margin-top:12px;">
+                <input type="hidden" name="plan" value="{escape(plano_code)}">
+                <button class="btn-primary" type="submit">Usar cliente de teste e continuar</button>
+              </form>
+            </div>
+            """
+        else:
+            admin_test_action = """
+            <div class="checkout-option" style="margin-bottom:16px;">
+              <div class="small"><strong>Mercado Pago em producao.</strong> Entre ou cadastre um cliente real do portal para fazer uma compra real.</div>
+            </div>
+            """
     if modo == "login":
         form = f"""
+        {admin_test_action}
         <form method="post" action="/auth/login">
           <input type="hidden" name="plan" value="{escape(plano_code)}">
           <label>Email<input type="email" name="email" required></label>
@@ -375,6 +451,7 @@ def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
         """
     else:
         form = f"""
+        {admin_test_action}
         <form method="post" action="/auth/register">
           <input type="hidden" name="plan" value="{escape(plano_code)}">
           <div class="form-grid">
@@ -422,6 +499,17 @@ def _render_choose_plan(request: Request, plano_code="", mensagem="", erro=""):
     conteudo_plano = PLAN_CONTENT.get(plano_code, {})
     if cliente:
         return _redirect(f"/checkout?plan={plano_code}")
+    admin_test_action = ""
+    if admin:
+        if _mercadopago_config()["environment"] == "sandbox":
+            admin_test_action = f"""
+            <form method="post" action="/admin/testar-como-cliente">
+              <input type="hidden" name="plan" value="{escape(plano_code)}">
+              <button class="btn-primary" type="submit">Usar cliente de teste e ir ao checkout</button>
+            </form>
+            """
+        else:
+            admin_test_action = '<div class="small">Em producao, use um cadastro real de cliente para testar a compra.</div>'
     conteudo = f"""
     {_render_nav(cliente, admin)}
     <section class="grid">
@@ -430,6 +518,7 @@ def _render_choose_plan(request: Request, plano_code="", mensagem="", erro=""):
         <h1 style="font-size:34px;margin:12px 0 10px;">{escape(plano.get('nome', 'Plano'))}</h1>
         <p class="subtitle">Antes de seguir para o pagamento, o cliente pode entrar com a conta existente ou concluir um novo cadastro em poucos passos.</p>
         <div class="actions">
+          {admin_test_action}
           <a class="button btn-primary" href="/login?plan={escape(plano_code)}">Ja tenho login</a>
           <a class="button btn-soft" href="/cadastro?plan={escape(plano_code)}">Ainda nao tenho conta</a>
         </div>
@@ -460,10 +549,15 @@ def _render_checkout(request: Request, cliente, plano_code="", erro=""):
     mp_note = ""
     if mp_ready:
         ambiente = "Sandbox / Teste" if mp_cfg["environment"] == "sandbox" else "Producao"
+        mp_help = (
+            'No sandbox, use um comprador de teste do Mercado Pago. O email do cliente do portal precisa terminar com <strong>@testuser.com</strong>.'
+            if mp_cfg["environment"] == "sandbox"
+            else "Em producao, use um cliente real do portal e um comprador real do Mercado Pago. Nao use emails <strong>@testuser.com</strong>."
+        )
         mp_note = f"""
         <div class="checkout-option" style="margin-bottom:16px;">
           <div class="small"><strong>Mercado Pago ativo:</strong> o checkout vai abrir no ambiente oficial do Mercado Pago em <strong>{ambiente}</strong>.</div>
-          <div class="small">No sandbox, use um comprador de teste do Mercado Pago. O email do cliente do portal precisa terminar com <strong>@testuser.com</strong>.</div>
+          <div class="small">{mp_help}</div>
         </div>
         """
     conteudo = f"""
@@ -495,7 +589,7 @@ def _render_checkout(request: Request, cliente, plano_code="", erro=""):
         <h2 class="section-title">Resumo da contratacao</h2>
         <div class="meta-card"><div class="meta-label">Cliente</div><div class="meta-value">{escape(cliente.get('nome', ''))}</div></div>
         <div class="meta-card" style="margin-top:12px;"><div class="meta-label">Plano</div><div class="meta-value">{escape(plano.get('nome', 'Plano'))}</div></div>
-        <div class="meta-card" style="margin-top:12px;"><div class="meta-label">Mensalidade</div><div class="meta-value">{escape(_fmt_money(plano.get('valor_mensal', 0)))}</div></div>
+        <div class="meta-card" style="margin-top:12px;"><div class="meta-label">Valor</div><div class="meta-value">{escape(_fmt_money(plano.get('valor_mensal', 0)))}</div></div>
       </article>
     </section>
     """
@@ -1093,6 +1187,22 @@ def admin_login(username: str = Form(""), password: str = Form("")):
     return response
 
 
+@app.post("/admin/testar-como-cliente")
+def admin_testar_como_cliente(request: Request, plan: str = Form("")):
+    admin = _require_admin(request)
+    if not admin:
+        return _redirect("/admin/login?err=" + urlencode({"err": "Entre como administrador para iniciar o teste."}))
+    if _mercadopago_config()["environment"] != "sandbox":
+        return _redirect("/login?" + urlencode({"plan": plan, "err": "Em producao, use um cliente real para testar a compra."}))
+    cliente = _ensure_test_buyer()
+    token = secrets.token_urlsafe(24)
+    CLIENT_SESSIONS[token] = cliente["id"]
+    destino = "/checkout?" + urlencode({"plan": plan}) if plan else "/portal"
+    response = _redirect(destino)
+    _set_cookie(response, "portal_session", token)
+    return response
+
+
 @app.post("/admin/bootstrap")
 def admin_bootstrap(
     nome: str = Form(""),
@@ -1122,8 +1232,9 @@ def checkout_iniciar(request: Request, plan: str = Form(""), payment_method: str
         payment_method=payment_method,
     )
     if _mercadopago_ready():
+        metodo = str(payment_method or "").strip().lower()
         try:
-            assinatura_mp = _mercadopago_criar_assinatura(checkout)
+            checkout_mp = _mercadopago_criar_pagamento_unico(checkout) if metodo == "pix" else _mercadopago_criar_assinatura(checkout)
         except ValueError as exc:
             atualizar_checkout_portal_status(
                 cobranca_id=checkout["id"],
@@ -1132,8 +1243,8 @@ def checkout_iniciar(request: Request, plan: str = Form(""), payment_method: str
                 external_ref="mercadopago-checkout-error",
             )
             return _redirect("/checkout?" + urlencode({"plan": plan, "err": str(exc)}))
-        external_id = str(assinatura_mp.get("id") or "").strip()
-        init_point = str(assinatura_mp.get("init_point") or "").strip()
+        external_id = str(checkout_mp.get("id") or "").strip()
+        init_point = str(checkout_mp.get("init_point") or checkout_mp.get("sandbox_init_point") or "").strip()
         if not external_id or not init_point:
             atualizar_checkout_portal_status(
                 cobranca_id=checkout["id"],
@@ -1177,12 +1288,13 @@ def checkout_mercadopago_iniciar(request: Request, id: str = "0"):
         return _redirect("/portal?" + urlencode({"err": "Checkout pendente nao encontrado para este usuario."}))
     if _is_mercadopago_checkout(checkout):
         return _redirect("/checkout/mercadopago/continuar?" + urlencode({"id": checkout.get("id")}))
+    metodo = str(checkout.get("payment_method") or "").strip().lower()
     try:
-        assinatura_mp = _mercadopago_criar_assinatura(checkout)
+        checkout_mp = _mercadopago_criar_pagamento_unico(checkout) if metodo == "pix" else _mercadopago_criar_assinatura(checkout)
     except ValueError as exc:
         return _redirect("/checkout/pix?" + urlencode({"id": checkout.get("id"), "err": str(exc)}))
-    external_id = str(assinatura_mp.get("id") or "").strip()
-    init_point = str(assinatura_mp.get("init_point") or "").strip()
+    external_id = str(checkout_mp.get("id") or "").strip()
+    init_point = str(checkout_mp.get("init_point") or checkout_mp.get("sandbox_init_point") or "").strip()
     if not external_id or not init_point:
         return _redirect("/checkout/pix?" + urlencode({"id": checkout.get("id"), "err": "O Mercado Pago nao retornou um link valido para o checkout."}))
     atualizar_checkout_portal_gateway(
@@ -1206,10 +1318,43 @@ def checkout_mercadopago_verificar(request: Request, id: str = "0"):
 
 
 @app.get("/checkout/mercadopago/retorno")
-def checkout_mercadopago_retorno(checkout_id: str = "0", preapproval_id: str = "", id: str = "", status: str = ""):
+def checkout_mercadopago_retorno(
+    checkout_id: str = "0",
+    preapproval_id: str = "",
+    id: str = "",
+    payment_id: str = "",
+    collection_id: str = "",
+    collection_status: str = "",
+    status: str = "",
+):
     cobranca = obter_checkout_portal(checkout_id)
     if not cobranca:
         return _redirect("/portal?" + urlencode({"err": "Checkout do Mercado Pago nao encontrado."}))
+    pagamento_externo = (payment_id or collection_id or "").strip()
+    if pagamento_externo:
+        try:
+            pagamento_mp = _mercadopago_obter_pagamento(pagamento_externo)
+        except ValueError as exc:
+            return _redirect("/portal?" + urlencode({"err": str(exc)}))
+        mp_status = str(pagamento_mp.get("status") or collection_status or status or "").strip().lower()
+        if mp_status == "approved":
+            confirmar_pagamento_portal(cobranca_id=checkout_id, payment_method=cobranca.get("payment_method") or "mercadopago")
+            return _redirect("/portal?" + urlencode({"msg": "Pagamento confirmado pelo Mercado Pago e plano ativado com sucesso."}))
+        if mp_status in {"cancelled", "rejected"}:
+            atualizar_checkout_portal_status(
+                cobranca_id=checkout_id,
+                status="falhou",
+                payment_method=cobranca.get("payment_method") or "mercadopago",
+                external_ref=pagamento_externo,
+            )
+            return _redirect("/portal?" + urlencode({"err": f"Pagamento Mercado Pago com status {mp_status}."}))
+        atualizar_checkout_portal_status(
+            cobranca_id=checkout_id,
+            status="pendente",
+            payment_method=cobranca.get("payment_method") or "mercadopago",
+            external_ref=pagamento_externo,
+        )
+        return _redirect("/portal?" + urlencode({"msg": f"Pagamento Mercado Pago com status {mp_status or 'pendente'}. Aguarde a confirmacao."}))
     assinatura_externa = (preapproval_id or id or cobranca.get("external_ref") or "").strip()
     if not assinatura_externa:
         return _redirect("/portal?" + urlencode({"msg": "Retorno recebido. Consulte o status do pagamento no Mercado Pago para confirmar a ativacao."}))
