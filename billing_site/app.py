@@ -287,6 +287,43 @@ def _mercadopago_obter_pagamento(payment_id: str):
     return _mercadopago_request("GET", f"/v1/payments/{payment_id}")
 
 
+def _mercadopago_buscar_pagamento_por_referencia(external_reference: str):
+    query = urlencode(
+        {
+            "external_reference": str(external_reference or "").strip(),
+            "sort": "date_created",
+            "criteria": "desc",
+        }
+    )
+    resposta = _mercadopago_request("GET", f"/v1/payments/search?{query}")
+    pagamentos = resposta.get("results") or []
+    return pagamentos[0] if pagamentos else None
+
+
+def _aplicar_pagamento_mercadopago(cobranca, pagamento_mp, fallback_status=""):
+    pagamento_id = str((pagamento_mp or {}).get("id") or "").strip()
+    mp_status = str((pagamento_mp or {}).get("status") or fallback_status or "").strip().lower()
+    metodo = cobranca.get("payment_method") or "mercadopago"
+    if mp_status == "approved":
+        confirmar_pagamento_portal(cobranca_id=cobranca["id"], payment_method=metodo)
+        return "aprovado"
+    if mp_status in {"cancelled", "rejected"}:
+        atualizar_checkout_portal_status(
+            cobranca_id=cobranca["id"],
+            status="falhou",
+            payment_method=metodo,
+            external_ref=pagamento_id or cobranca.get("external_ref") or "",
+        )
+        return "falhou"
+    atualizar_checkout_portal_status(
+        cobranca_id=cobranca["id"],
+        status="pendente",
+        payment_method=metodo,
+        external_ref=pagamento_id or cobranca.get("external_ref") or "",
+    )
+    return mp_status or "pendente"
+
+
 def _is_mercadopago_checkout(checkout):
     return bool((checkout or {}).get("external_ref"))
 
@@ -1336,25 +1373,25 @@ def checkout_mercadopago_retorno(
             pagamento_mp = _mercadopago_obter_pagamento(pagamento_externo)
         except ValueError as exc:
             return _redirect("/portal?" + urlencode({"err": str(exc)}))
-        mp_status = str(pagamento_mp.get("status") or collection_status or status or "").strip().lower()
-        if mp_status == "approved":
-            confirmar_pagamento_portal(cobranca_id=checkout_id, payment_method=cobranca.get("payment_method") or "mercadopago")
+        resultado_pagamento = _aplicar_pagamento_mercadopago(cobranca, pagamento_mp, collection_status or status)
+        if resultado_pagamento == "aprovado":
             return _redirect("/portal?" + urlencode({"msg": "Pagamento confirmado pelo Mercado Pago e plano ativado com sucesso."}))
-        if mp_status in {"cancelled", "rejected"}:
-            atualizar_checkout_portal_status(
-                cobranca_id=checkout_id,
-                status="falhou",
-                payment_method=cobranca.get("payment_method") or "mercadopago",
-                external_ref=pagamento_externo,
-            )
-            return _redirect("/portal?" + urlencode({"err": f"Pagamento Mercado Pago com status {mp_status}."}))
-        atualizar_checkout_portal_status(
-            cobranca_id=checkout_id,
-            status="pendente",
-            payment_method=cobranca.get("payment_method") or "mercadopago",
-            external_ref=pagamento_externo,
-        )
-        return _redirect("/portal?" + urlencode({"msg": f"Pagamento Mercado Pago com status {mp_status or 'pendente'}. Aguarde a confirmacao."}))
+        if resultado_pagamento == "falhou":
+            return _redirect("/portal?" + urlencode({"err": "Pagamento Mercado Pago nao aprovado."}))
+        return _redirect("/portal?" + urlencode({"msg": f"Pagamento Mercado Pago com status {resultado_pagamento}. Aguarde a confirmacao."}))
+    if str(cobranca.get("payment_method") or "").strip().lower() == "pix":
+        try:
+            pagamento_mp = _mercadopago_buscar_pagamento_por_referencia(str(cobranca.get("id")))
+        except ValueError as exc:
+            return _redirect("/portal?" + urlencode({"err": str(exc)}))
+        if not pagamento_mp:
+            return _redirect("/portal?" + urlencode({"msg": "Ainda nao encontramos o pagamento PIX no Mercado Pago. Aguarde alguns instantes e verifique novamente."}))
+        resultado_pagamento = _aplicar_pagamento_mercadopago(cobranca, pagamento_mp)
+        if resultado_pagamento == "aprovado":
+            return _redirect("/portal?" + urlencode({"msg": "Pagamento confirmado pelo Mercado Pago e plano ativado com sucesso."}))
+        if resultado_pagamento == "falhou":
+            return _redirect("/portal?" + urlencode({"err": "Pagamento Mercado Pago nao aprovado."}))
+        return _redirect("/portal?" + urlencode({"msg": f"Pagamento Mercado Pago com status {resultado_pagamento}. Aguarde a confirmacao."}))
     assinatura_externa = (preapproval_id or id or cobranca.get("external_ref") or "").strip()
     if not assinatura_externa:
         return _redirect("/portal?" + urlencode({"msg": "Retorno recebido. Consulte o status do pagamento no Mercado Pago para confirmar a ativacao."}))
@@ -1381,6 +1418,47 @@ def checkout_mercadopago_retorno(
         external_ref=assinatura_externa,
     )
     return _redirect("/portal?" + urlencode({"msg": f"Checkout do Mercado Pago criado com status {mp_status or 'pendente'}. Aguarde a confirmacao do pagamento."}))
+
+
+@app.post("/webhooks/mercadopago")
+async def mercadopago_webhook(request: Request):
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    topic = str(request.query_params.get("topic") or request.query_params.get("type") or body.get("type") or "").strip()
+    data = body.get("data") if isinstance(body.get("data"), dict) else {}
+    pagamento_id = str(
+        request.query_params.get("id")
+        or request.query_params.get("data.id")
+        or data.get("id")
+        or body.get("id")
+        or ""
+    ).strip()
+    if topic and topic not in {"payment", "payments"}:
+        return JSONResponse({"ok": True, "ignored": topic})
+    if not pagamento_id:
+        return JSONResponse({"ok": True, "ignored": "missing_payment_id"})
+    try:
+        pagamento_mp = _mercadopago_obter_pagamento(pagamento_id)
+    except ValueError as exc:
+        MP_LOGGER.error("webhook_payment_error payment_id=%s error=%s", pagamento_id, exc)
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=200)
+    external_reference = str(pagamento_mp.get("external_reference") or "").strip()
+    if not external_reference:
+        return JSONResponse({"ok": True, "ignored": "missing_external_reference"})
+    cobranca = obter_checkout_portal(external_reference)
+    if not cobranca:
+        return JSONResponse({"ok": True, "ignored": "checkout_not_found"})
+    resultado = _aplicar_pagamento_mercadopago(cobranca, pagamento_mp)
+    MP_LOGGER.info(
+        "webhook_payment_applied payment_id=%s checkout_id=%s status=%s",
+        pagamento_id,
+        external_reference,
+        resultado,
+    )
+    return JSONResponse({"ok": True, "status": resultado})
 
 
 @app.post("/checkout/pix/aprovar")
