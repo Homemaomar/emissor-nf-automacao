@@ -7,10 +7,18 @@ import unicodedata
 from datetime import datetime
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import customtkinter as ctk
 import pandas as pd
 
-from database.db import carregar_config, contar_notas_importadas, criar_banco, primeiro_acesso
+from database.db import (
+    carregar_config,
+    contar_notas_importadas,
+    criar_banco,
+    primeiro_acesso,
+    usuario_e_gestor,
+)
 from dados.leitor_planilha import PlanilhaNotasRepository, montar_caminho_planilha
 from interface.admin_usuarios import AdminUsuariosWindow
 from interface.importacao import ImportacaoWindow
@@ -19,9 +27,6 @@ from interface.notas_banco import NotasBancoWindow
 from interface.tela_config import TelaConfig
 from utils.filtro_itens import interpretar_itens
 from utils.orquestrador_emissao import OrquestradorEmissao
-
-
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -46,6 +51,14 @@ THEME = {
     "success": "#3ddc97",
     "info": "#6fb6ff",
     "warning": "#ffb757",
+}
+RECURSO_EMISSAO = "emissao_nfse"
+RECURSO_EMAIL = "envio_email"
+RECURSO_WHATSAPP = "envio_whatsapp"
+ROTULOS_RECURSOS = {
+    RECURSO_EMISSAO: "Emissão NFS-e",
+    RECURSO_EMAIL: "Email",
+    RECURSO_WHATSAPP: "WhatsApp",
 }
 
 
@@ -87,7 +100,11 @@ class StatusCard(ctk.CTkFrame):
             font=("Segoe UI Semibold", 24, "bold"),
             text_color=text,
         )
-        self.value_label.pack(anchor="w", padx=16, pady=(6, 14))
+        self.value_label.pack(anchor="w", padx=16, pady=(6, 8))
+
+        self.action_area = ctk.CTkFrame(self, fg_color="transparent", height=30)
+        self.action_area.pack(fill="x", padx=16, pady=(0, 12))
+        self.action_area.pack_propagate(False)
 
 
 class EmissorApp(ctk.CTk):
@@ -95,13 +112,14 @@ class EmissorApp(ctk.CTk):
         super().__init__()
 
         self.usuario = usuario
+        self.recursos_plano = set(self.usuario.get("recursos") or [])
         self.title("Emissor NFS-e")
         self.geometry("1440x860")
         self.minsize(1280, 780)
         self.configure(fg_color=THEME["app_bg"])
 
         self.config_data = carregar_config()
-        self.base_notas = self.config_data.get("caminho_base", "")
+        self.base_notas = self._resolver_base_notas(self.config_data.get("caminho_base", ""))
         self.caminho_base = self.base_notas
         self.recurrence_enabled = self.config_data.get("recurrence_enabled", False)
         self.recurrence_frequency = self.config_data.get(
@@ -114,10 +132,69 @@ class EmissorApp(ctk.CTk):
         self.importacao_window = None
         self.notas_banco_window = None
         self.admin_window = None
+        self.logout_requested = False
+        self._snapshot_periodo = None
 
         self._criar_layout()
         self.after(150, self.processar_fila_eventos)
         self.after(250, self.atualizar_dashboard)
+        self.after(5000, self.monitorar_pastas_base)
+
+    def _tem_recurso(self, recurso):
+        return recurso in self.recursos_plano or "*" in self.recursos_plano
+
+    def _texto_plano(self):
+        plano = self.usuario.get("plano_nome") or self.usuario.get("plano_code") or "Plano não identificado"
+        return f"Plano: {plano}"
+
+    def _texto_recursos(self):
+        if not self.recursos_plano:
+            return "Recursos: não identificados"
+        rotulos = [
+            label
+            for recurso, label in ROTULOS_RECURSOS.items()
+            if self._tem_recurso(recurso)
+        ]
+        return "Recursos: " + (", ".join(rotulos) if rotulos else "sem módulos operacionais")
+
+    def _texto_licenca(self):
+        assinatura = (self.usuario.get("licenca") or {}).get("assinatura") or {}
+        status = str(assinatura.get("status") or "").strip().lower()
+        if status == "trial":
+            restantes = assinatura.get("trial_days_remaining")
+            if restantes is None:
+                vencimento = self._parse_datetime(assinatura.get("next_due_at"))
+                if vencimento:
+                    segundos = (vencimento - datetime.now()).total_seconds()
+                    restantes = 0 if segundos <= 0 else int((segundos + 86399) // 86400)
+            if restantes is not None:
+                unidade = "dia" if int(restantes) == 1 else "dias"
+                return f"Teste grátis: restam {int(restantes)} {unidade}"
+            return "Teste grátis ativo"
+        if status in {"active", "paid"}:
+            vencimento = assinatura.get("next_due_at") or ""
+            return f"Licença ativa até {vencimento}" if vencimento else "Licença ativa"
+        return "Licença validada"
+
+    def _parse_datetime(self, value):
+        texto = str(value or "").strip()
+        if not texto:
+            return None
+        try:
+            return datetime.fromisoformat(texto.replace("Z", "+00:00")).replace(tzinfo=None)
+        except ValueError:
+            return None
+
+    def _resolver_base_notas(self, caminho_configurado=""):
+        caminho = str(caminho_configurado or "").strip()
+        if caminho and os.path.exists(caminho):
+            return caminho
+
+        fallback = r"C:\Notas"
+        if os.path.exists(fallback):
+            return fallback
+
+        return caminho
 
     def _criar_layout(self):
         self.grid_propagate(False)
@@ -172,7 +249,7 @@ class EmissorApp(ctk.CTk):
 
         ctk.CTkLabel(
             brand,
-            text="Operacao recorrente de emissao, envio e rastreio.",
+            text="Operação recorrente de emissão, envio e rastreio.",
             font=("Segoe UI", 13),
             text_color=THEME["text_muted"],
             justify="left",
@@ -182,12 +259,12 @@ class EmissorApp(ctk.CTk):
         menu = [
             ("Painel operacional", None),
             ("Importar base", self.abrir_importacao),
-            ("Historico de lotes", None),
-            ("Recorrencia", None),
-            ("Configuracoes", self.abrir_configuracao),
+            ("Histórico de lotes", None),
+            ("Recorrência", None),
+            ("Configurações", self.abrir_configuracao),
         ]
 
-        if self.usuario.get("role") == "admin":
+        if usuario_e_gestor(self.usuario):
             menu.append(("Aprovar acessos", self.abrir_aprovacoes))
 
         for row, (text, command) in enumerate(menu, start=1):
@@ -218,7 +295,7 @@ class EmissorApp(ctk.CTk):
 
         ctk.CTkLabel(
             insight,
-            text="Sessao ativa",
+            text="Sessão ativa",
             font=("Segoe UI Semibold", 14, "bold"),
             text_color=THEME["text"],
         ).pack(anchor="w", padx=16, pady=(16, 4))
@@ -232,6 +309,35 @@ class EmissorApp(ctk.CTk):
             wraplength=226,
         ).pack(anchor="w", padx=16, pady=(0, 6))
 
+        ctk.CTkLabel(
+            insight,
+            text=self._texto_plano(),
+            font=("Segoe UI Semibold", 12, "bold"),
+            text_color=THEME["text"],
+            justify="left",
+            wraplength=226,
+        ).pack(anchor="w", padx=16, pady=(0, 4))
+
+        ctk.CTkLabel(
+            insight,
+            text=self._texto_recursos(),
+            font=("Segoe UI", 11),
+            text_color=THEME["text_muted"],
+            justify="left",
+            wraplength=226,
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
+        ctk.CTkLabel(
+            insight,
+            text=self._texto_licenca(),
+            font=("Segoe UI Semibold", 12, "bold"),
+            text_color=THEME["warning"]
+            if str(((self.usuario.get("licenca") or {}).get("assinatura") or {}).get("status") or "").lower() == "trial"
+            else THEME["success"],
+            justify="left",
+            wraplength=226,
+        ).pack(anchor="w", padx=16, pady=(0, 8))
+
         self.label_recorrencia = ctk.CTkLabel(
             insight,
             text=self._texto_recorrencia(),
@@ -240,7 +346,25 @@ class EmissorApp(ctk.CTk):
         )
         self.label_recorrencia.pack(anchor="w", padx=16, pady=(0, 14))
 
+        ctk.CTkButton(
+            insight,
+            text="Sair",
+            height=38,
+            fg_color="transparent",
+            hover_color="#26344c",
+            text_color=THEME["text_muted"],
+            border_width=1,
+            border_color=THEME["border_strong"],
+            corner_radius=16,
+            font=("Segoe UI Semibold", 13, "bold"),
+            command=self.sair,
+        ).pack(fill="x", padx=16, pady=(0, 16))
+
         return sidebar
+
+    def sair(self):
+        self.logout_requested = True
+        self.destroy()
 
     def _criar_topbar(self):
         topbar = ctk.CTkFrame(self.main, fg_color="transparent")
@@ -249,7 +373,7 @@ class EmissorApp(ctk.CTk):
 
         ctk.CTkLabel(
             topbar,
-            text="Painel de emissao",
+            text="Painel de emissão",
             font=("Segoe UI Semibold", 22, "bold"),
             text_color=THEME["text"],
         ).grid(row=0, column=0, sticky="w", padx=6, pady=(0, 0))
@@ -267,7 +391,7 @@ class EmissorApp(ctk.CTk):
 
         self.label_base = ctk.CTkLabel(
             meta,
-            text=f"Base: {self.base_notas or 'nao configurada'}",
+            text=f"Base: {self.base_notas or 'não configurada'}",
             font=("Segoe UI", 11),
             text_color=THEME["text_soft"],
             wraplength=340,
@@ -283,14 +407,14 @@ class EmissorApp(ctk.CTk):
         self.workspace.grid_rowconfigure(1, weight=1)
 
         dash = ctk.CTkFrame(self.workspace, fg_color="transparent")
-        dash.grid(row=0, column=0, sticky="ew", padx=(0, 8), pady=(0, 16))
+        dash.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 16))
         dash.grid_columnconfigure((0, 1, 2, 3), weight=1)
 
         specs = [
-            ("Operacao", "Notas pendentes", "0", "blue"),
+            ("Operação", "Notas pendentes", "0", "blue"),
             ("Financeiro", "Valor em carteira", "R$ 0,00", "amber"),
             ("Resultado", "Emitidas no lote", "0", "green"),
-            ("Importacao", "Notas no banco", str(contar_notas_importadas()), "amber"),
+            ("Importação", "Notas no banco", str(contar_notas_importadas()), "amber"),
         ]
 
         self.dashboard_cards = []
@@ -329,7 +453,7 @@ class EmissorApp(ctk.CTk):
 
         ctk.CTkLabel(
             bloco,
-            text="Fluxo de emissao",
+            text="Fluxo de emissão",
             font=("Segoe UI Semibold", 18, "bold"),
             text_color=THEME["text"],
         ).grid(row=0, column=0, columnspan=3, sticky="w", padx=20, pady=(16, 10))
@@ -341,7 +465,7 @@ class EmissorApp(ctk.CTk):
             bloco,
             1,
             1,
-            "Mes",
+            "Mês",
             [
                 "01 - Janeiro",
                 "02 - Fevereiro",
@@ -363,18 +487,18 @@ class EmissorApp(ctk.CTk):
             bloco,
             1,
             2,
-            "Municipio",
+            "Município",
             ["Afogados da Ingazeira", "Triunfo", "Serra Talhada"],
         )
         self.combo_municipio.set("Afogados da Ingazeira")
 
         self.combo_cliente = self._combo(
-            bloco, 2, 0, "Cliente", ["Todos", "Saude", "Educacao", "Assistencia"]
+            bloco, 2, 0, "Cliente", ["Todos"]
         )
         self.combo_cliente.set("Todos")
 
         self.combo_especie = self._combo(
-            bloco, 2, 1, "Especie", ["Todas", "Reembolso", "Lote I", "Lote II", "Avulsa"]
+            bloco, 2, 1, "Espécie", ["Todas"]
         )
         self.combo_especie.set("Todas")
 
@@ -389,12 +513,13 @@ class EmissorApp(ctk.CTk):
 
         ctk.CTkLabel(
             modo_frame,
-            text="Modo de execucao",
+            text="Modo de execução",
             font=("Segoe UI Semibold", 12, "bold"),
             text_color=THEME["text"],
         ).pack(anchor="w", padx=14, pady=(10, 4))
 
         self.modo = ctk.StringVar(value="todas")
+        self.nota_fiscal_teste = ctk.BooleanVar(value=True)
         for text, value in [
             ("Emitir tudo", "todas"),
             ("Emitir por item", "item"),
@@ -415,9 +540,22 @@ class EmissorApp(ctk.CTk):
                 border_width_checked=5,
             ).pack(anchor="w", padx=14, pady=1)
 
+        ctk.CTkCheckBox(
+            modo_frame,
+            text="Nota fiscal teste",
+            variable=self.nota_fiscal_teste,
+            text_color=THEME["text"],
+            border_color=THEME["border_strong"],
+            fg_color=THEME["primary"],
+            hover_color=THEME["primary_hover"],
+            font=("Segoe UI", 11),
+            checkbox_width=16,
+            checkbox_height=16,
+        ).pack(anchor="w", padx=14, pady=(8, 10))
+
         self.entry_itens = ctk.CTkEntry(
             bloco,
-            placeholder_text="Itens especificos. Ex: 1, 2, 5-8",
+            placeholder_text="Itens específicos. Ex: 1, 2, 5-8",
             height=34,
             border_width=1,
             border_color=THEME["border_strong"],
@@ -440,7 +578,7 @@ class EmissorApp(ctk.CTk):
 
         self.botao_emitir = ctk.CTkButton(
             acao_frame,
-            text="Iniciar emissao",
+            text="Iniciar emissão",
             width=156,
             height=36,
             font=("Segoe UI Semibold", 13, "bold"),
@@ -450,6 +588,13 @@ class EmissorApp(ctk.CTk):
             command=self.iniciar_emissao,
         )
         self.botao_emitir.pack(side="left", padx=(10, 8), pady=8)
+        if not self._tem_recurso(RECURSO_EMISSAO):
+            self.botao_emitir.configure(
+                text="Emissão bloqueada",
+                state="disabled",
+                fg_color=THEME["surface_soft"],
+                text_color=THEME["text_muted"],
+            )
 
         ctk.CTkButton(
             acao_frame,
@@ -467,6 +612,9 @@ class EmissorApp(ctk.CTk):
         for combo in [self.combo_ano, self.combo_mes, self.combo_municipio]:
             combo.configure(command=self.on_filtro_change)
 
+        self._atualizar_opcoes_periodo()
+        self.atualizar_opcoes_planilha()
+
     def _criar_bloco_resumo(self, parent):
         bloco = ctk.CTkFrame(
             parent,
@@ -475,8 +623,9 @@ class EmissorApp(ctk.CTk):
             border_width=1,
             border_color=THEME["border"],
         )
-        bloco.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(8, 0))
-        bloco.grid_rowconfigure(2, weight=1)
+        bloco.grid(row=1, column=1, sticky="nsew", padx=(8, 0))
+        bloco.grid_rowconfigure(2, weight=1, minsize=260)
+        bloco.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(
             bloco,
@@ -535,7 +684,7 @@ class EmissorApp(ctk.CTk):
         self.console_interativo.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 10))
 
         entrada_wrap = ctk.CTkFrame(bloco, fg_color="transparent")
-        entrada_wrap.grid(row=3, column=0, sticky="ew", padx=16, pady=(0, 18))
+        entrada_wrap.grid(row=3, column=0, sticky="ew", padx=16, pady=(0, 14))
         entrada_wrap.grid_columnconfigure(0, weight=1)
 
         self.entry_comando = ctk.CTkEntry(
@@ -568,7 +717,7 @@ class EmissorApp(ctk.CTk):
         self.console_interativo.insert("end", "Sistema> Painel interativo pronto.\n")
         self.console_interativo.insert(
             "end",
-            "Sistema> Comandos disponiveis: status, importar, notas, configurar, aprovar, limpar.\n",
+            "Sistema> Comandos disponíveis: status, importar, notas, configurar, aprovar, limpar.\n",
         )
         self.console_interativo.configure(state="disabled")
         self._restaurar_modo_comando()
@@ -587,14 +736,14 @@ class EmissorApp(ctk.CTk):
 
         ctk.CTkLabel(
             panel,
-            text="Monitor de execucao",
+            text="Monitor de execução",
             font=("Segoe UI Semibold", 14, "bold"),
             text_color=THEME["text"],
         ).grid(row=0, column=0, sticky="w", padx=14, pady=(8, 2))
 
         ctk.CTkLabel(
             panel,
-            text="Logs legiveis, progresso e operador responsavel pelo lote.",
+            text="Logs legíveis, progresso e operador responsável pelo lote.",
             font=("Segoe UI", 10),
             text_color=THEME["text_muted"],
         ).grid(row=0, column=1, sticky="w", padx=(0, 14), pady=(8, 2))
@@ -632,7 +781,7 @@ class EmissorApp(ctk.CTk):
 
         self.label_status_execucao = ctk.CTkLabel(
             right,
-            text="Status atual: aguardando inicio.",
+            text="Status atual: aguardando início.",
             font=("Segoe UI Semibold", 10, "bold"),
             text_color=THEME["primary"],
             justify="left",
@@ -642,7 +791,7 @@ class EmissorApp(ctk.CTk):
 
         self.label_proxima_etapa = ctk.CTkLabel(
             right,
-            text="O proximo passo pode ser liberar usuarios pendentes ou iniciar um lote.",
+            text="O próximo passo pode ser liberar usuários pendentes ou iniciar um lote.",
             font=("Segoe UI", 9),
             text_color=THEME["text_muted"],
             justify="left",
@@ -652,7 +801,7 @@ class EmissorApp(ctk.CTk):
 
         self.label_responsavel = ctk.CTkLabel(
             right,
-            text=f"Responsavel do lote: {self.usuario.get('nome')}",
+            text=f"Responsável do lote: {self.usuario.get('nome')}",
             font=("Segoe UI", 9),
             text_color=THEME["text"],
             justify="left",
@@ -711,22 +860,100 @@ class EmissorApp(ctk.CTk):
         }
         return nomes.get(month_number, "Janeiro")
 
+    def _numero_mes_combo(self, valor):
+        texto = str(valor or "").strip()
+        prefixo = texto.split("-", 1)[0].strip()
+        return int(prefixo) if prefixo.isdigit() else 99
+
+    def _atualizar_opcoes_periodo(self):
+        if not all(
+            hasattr(self, nome)
+            for nome in ("combo_ano", "combo_mes", "combo_municipio")
+        ):
+            return
+
+        base = Path(self.base_notas or "")
+        if not base.exists():
+            return
+
+        anos = sorted(
+            [p.name for p in base.iterdir() if p.is_dir() and p.name.isdigit()],
+            reverse=True,
+        )
+        if not anos:
+            return
+
+        self.combo_ano.configure(values=anos)
+        if self.combo_ano.get() not in anos:
+            self.combo_ano.set(anos[0])
+
+        pasta_ano = base / self.combo_ano.get()
+        meses = sorted(
+            [p.name for p in pasta_ano.iterdir() if p.is_dir()],
+            key=self._numero_mes_combo,
+        )
+        if meses:
+            self.combo_mes.configure(values=meses)
+            if self.combo_mes.get() not in meses:
+                self.combo_mes.set(meses[-1])
+
+        pasta_mes = pasta_ano / self.combo_mes.get()
+        municipios = sorted([p.name for p in pasta_mes.iterdir() if p.is_dir()])
+        if municipios:
+            self.combo_municipio.configure(values=municipios)
+            if self.combo_municipio.get() not in municipios:
+                self.combo_municipio.set(municipios[0])
+
+    def _snapshot_pastas_periodo(self):
+        base = Path(self.base_notas or "")
+        if not base.exists():
+            return ()
+
+        snapshot = []
+        for caminho in base.glob("*/*/*"):
+            if caminho.is_dir():
+                try:
+                    mtime = caminho.stat().st_mtime_ns
+                except OSError:
+                    mtime = 0
+                snapshot.append((str(caminho.relative_to(base)), mtime))
+        return tuple(sorted(snapshot))
+
+    def monitorar_pastas_base(self):
+        try:
+            snapshot = self._snapshot_pastas_periodo()
+            if self._snapshot_periodo is None:
+                self._snapshot_periodo = snapshot
+            elif snapshot != self._snapshot_periodo:
+                self._snapshot_periodo = snapshot
+                self._atualizar_opcoes_periodo()
+                self.atualizar_opcoes_planilha()
+                self.atualizar_dashboard()
+                self.logar("Estrutura de pastas atualizada automaticamente.")
+        except Exception as exc:
+            self.logar(f"Erro ao monitorar pastas: {exc}")
+        finally:
+            if self.winfo_exists():
+                self.after(5000, self.monitorar_pastas_base)
+
     def _texto_recorrencia(self):
         if not self.recurrence_enabled:
-            return "Recorrencia ainda manual"
-        return f"Recorrencia ativa: {self.recurrence_frequency}"
+            return "Recorrência ainda manual"
+        return f"Recorrência ativa: {self.recurrence_frequency}"
 
     def abrir_configuracao(self):
         tela = TelaConfig(self.usuario)
         tela.mainloop()
 
         self.config_data = carregar_config()
-        self.base_notas = self.config_data.get("caminho_base", "")
+        self.base_notas = self._resolver_base_notas(self.config_data.get("caminho_base", ""))
         self.caminho_base = self.base_notas
         self.recurrence_enabled = self.config_data.get("recurrence_enabled", False)
         self.recurrence_frequency = self.config_data.get("recurrence_frequency", "manual")
-        self.label_base.configure(text=f"Base: {self.base_notas or 'nao configurada'}")
+        self.label_base.configure(text=f"Base: {self.base_notas or 'não configurada'}")
         self.label_recorrencia.configure(text=self._texto_recorrencia())
+        self._atualizar_opcoes_periodo()
+        self.atualizar_opcoes_planilha()
         self.atualizar_dashboard()
 
     def abrir_importacao(self):
@@ -742,8 +969,8 @@ class EmissorApp(ctk.CTk):
         )
 
     def abrir_aprovacoes(self):
-        if self.usuario.get("role") != "admin":
-            self.logar("Apenas admins podem abrir a central de aprovacoes.")
+        if not usuario_e_gestor(self.usuario):
+            self.logar("Apenas o gestor local pode abrir a central de aprovações.")
             return
         self.admin_window = self._abrir_janela_unica(
             self.admin_window,
@@ -751,8 +978,79 @@ class EmissorApp(ctk.CTk):
         )
 
     def on_filtro_change(self, _value=None):
+        self._atualizar_opcoes_periodo()
+        self.atualizar_opcoes_planilha()
         self.logar("Atualizando indicadores do lote selecionado...")
         self.atualizar_dashboard()
+
+    def _normalizar_coluna_planilha(self, coluna):
+        texto = unicodedata.normalize("NFKD", str(coluna or "").strip().upper())
+        texto = "".join(ch for ch in texto if not unicodedata.combining(ch))
+        return " ".join(texto.split())
+
+    def _valores_unicos_coluna(self, df, coluna):
+        if not coluna or coluna not in df.columns:
+            return []
+        valores = []
+        vistos = set()
+        for valor in df[coluna].dropna().tolist():
+            texto = str(valor or "").strip()
+            chave = self._normalizar_coluna_planilha(texto)
+            if not texto or chave == coluna or chave in vistos:
+                continue
+            vistos.add(chave)
+            valores.append(texto)
+        return valores
+
+    def atualizar_opcoes_planilha(self):
+        if not hasattr(self, "combo_cliente") or not hasattr(self, "combo_especie"):
+            return
+
+        def resetar_opcoes():
+            self.combo_cliente.configure(values=["Todos"])
+            self.combo_especie.configure(values=["Todas"])
+            self.combo_cliente.set("Todos")
+            self.combo_especie.set("Todas")
+
+        try:
+            if not self.base_notas:
+                self.base_notas = self._resolver_base_notas()
+                self.caminho_base = self.base_notas
+                if hasattr(self, "label_base"):
+                    self.label_base.configure(text=f"Base: {self.base_notas or 'não configurada'}")
+
+            caminho = montar_caminho_planilha(
+                self.base_notas,
+                self.combo_ano.get(),
+                self.combo_mes.get(),
+                self.combo_municipio.get(),
+            )
+            xls = pd.ExcelFile(caminho, engine="openpyxl")
+            nome_aba = next((aba for aba in xls.sheet_names if aba.strip().upper() == "NOTAS"), None)
+            if not nome_aba:
+                xls.close()
+                return
+
+            df = pd.read_excel(xls, sheet_name=nome_aba)
+            xls.close()
+            df.columns = [self._normalizar_coluna_planilha(col) for col in df.columns]
+
+            coluna_cliente = "SECRETARIA" if "SECRETARIA" in df.columns else "CLIENTE" if "CLIENTE" in df.columns else "CLIENTE.1" if "CLIENTE.1" in df.columns else None
+            coluna_especie = "ESPECIE" if "ESPECIE" in df.columns else None
+
+            cliente_atual = self.combo_cliente.get()
+            especie_atual = self.combo_especie.get()
+            clientes = ["Todos"] + self._valores_unicos_coluna(df, coluna_cliente)
+            especies = ["Todas"] + self._valores_unicos_coluna(df, coluna_especie)
+
+            self.combo_cliente.configure(values=clientes)
+            self.combo_especie.configure(values=especies)
+            self.combo_cliente.set(cliente_atual if cliente_atual in clientes else "Todos")
+            self.combo_especie.set(especie_atual if especie_atual in especies else "Todas")
+        except (FileNotFoundError, ValueError):
+            resetar_opcoes()
+        except Exception:
+            resetar_opcoes()
 
     def logar(self, texto):
         agora = datetime.now().strftime("%H:%M:%S")
@@ -795,14 +1093,14 @@ class EmissorApp(ctk.CTk):
         )
         self.botao_comando.configure(text="Responder")
 
-        self._registrar_interacao("Sistema> Revisao final aguardando sua decisao.")
+        self._registrar_interacao("Sistema> Revisão final aguardando sua decisão.")
         for opcao in opcoes:
             self._registrar_interacao(
                 f"Sistema> {opcao.get('id')} - {opcao.get('label')}"
             )
 
         self.label_status_execucao.configure(
-            text="Status atual: aguardando sua decisao no painel interativo."
+            text="Status atual: aguardando sua decisão no painel interativo."
         )
         self.label_proxima_etapa.configure(
             text="Use o campo abaixo do console para responder 1, 2, 3 ou 4."
@@ -828,7 +1126,7 @@ class EmissorApp(ctk.CTk):
 
         resposta = mapa_opcoes.get(comando_normalizado)
         if not resposta:
-            self._registrar_interacao("Sistema> Resposta invalida. Use 1, 2, 3 ou 4.")
+            self._registrar_interacao("Sistema> Resposta inválida. Use 1, 2, 3 ou 4.")
             return True
 
         opcao_escolhida = next(
@@ -837,7 +1135,7 @@ class EmissorApp(ctk.CTk):
         )
         if opcao_escolhida:
             self._registrar_interacao(
-                f"Sistema> Opcao confirmada: {opcao_escolhida.get('label')}."
+                f"Sistema> Opção confirmada: {opcao_escolhida.get('label')}."
             )
 
         solicitacao = self.prompt_interativo
@@ -847,7 +1145,7 @@ class EmissorApp(ctk.CTk):
 
         self._restaurar_modo_comando()
         self.label_proxima_etapa.configure(
-            text="O proximo passo pode ser liberar usuarios pendentes ou iniciar um lote."
+            text="O próximo passo pode ser liberar usuários pendentes ou iniciar um lote."
         )
         return True
 
@@ -879,21 +1177,21 @@ class EmissorApp(ctk.CTk):
 
         if comando_normalizado in {"status", "painel", "resumo"}:
             self._mostrar_status_operacional()
-        elif comando_normalizado in {"importar", "importacao", "base"}:
-            self._registrar_interacao("Sistema> Abrindo a central de importacao.")
+        elif comando_normalizado in {"importar", "importacao", "importação", "base"}:
+            self._registrar_interacao("Sistema> Abrindo a central de importação.")
             self.abrir_importacao()
         elif comando_normalizado in {"notas", "ver notas", "banco"}:
             self._registrar_interacao("Sistema> Abrindo a base de notas importadas.")
             self.abrir_notas_banco()
-        elif comando_normalizado in {"config", "configurar", "configuracoes"}:
-            self._registrar_interacao("Sistema> Abrindo as configuracoes do produto.")
+        elif comando_normalizado in {"config", "configurar", "configuracoes", "configurações"}:
+            self._registrar_interacao("Sistema> Abrindo as configurações do produto.")
             self.abrir_configuracao()
         elif comando_normalizado in {"aprovar", "usuarios", "aprovar acessos"}:
-            if self.usuario.get("role") != "admin":
-                self._registrar_interacao("Sistema> Apenas admins podem aprovar acessos.")
-                self.logar("Apenas admins podem abrir a central de aprovacoes.")
+            if not usuario_e_gestor(self.usuario):
+                self._registrar_interacao("Sistema> Apenas o gestor local pode aprovar acessos.")
+                self.logar("Apenas o gestor local pode abrir a central de aprovações.")
                 return
-            self._registrar_interacao("Sistema> Abrindo a central de aprovacao de usuarios.")
+            self._registrar_interacao("Sistema> Abrindo a central de aprovação de usuários.")
             self.abrir_aprovacoes()
         elif comando_normalizado in {"limpar", "clear", "cls"}:
             self.console_interativo.configure(state="normal")
@@ -902,7 +1200,7 @@ class EmissorApp(ctk.CTk):
             self.console_interativo.configure(state="disabled")
         else:
             self._registrar_interacao(
-                "Sistema> Comando nao reconhecido. Use status, importar, notas, configurar, aprovar ou limpar."
+                "Sistema> Comando não reconhecido. Use status, importar, notas, configurar, aprovar ou limpar."
             )
 
     def _mostrar_status_operacional(self):
@@ -911,7 +1209,7 @@ class EmissorApp(ctk.CTk):
         pendentes = self.lbl_pendentes.cget("text")
         importadas = self.lbl_importadas.cget("text")
         self._registrar_interacao(
-            f"Sistema> Periodo ativo: {periodo} | Municipio: {municipio} | Pendentes: {pendentes} | Notas no banco: {importadas}."
+            f"Sistema> Período ativo: {periodo} | Município: {municipio} | Pendentes: {pendentes} | Notas no banco: {importadas}."
         )
 
     def processar_fila_eventos(self):
@@ -929,7 +1227,7 @@ class EmissorApp(ctk.CTk):
                 elif tipo == "input_request":
                     self._ativar_prompt_interativo(evento[1])
                 elif tipo == "finish":
-                    mensagem_final = evento[1] if len(evento) > 1 else "lote concluido."
+                    mensagem_final = evento[1] if len(evento) > 1 else "lote concluído."
                     self.botao_emitir.configure(state="normal")
                     self.emissao_em_andamento = False
                     if not self.prompt_interativo:
@@ -946,7 +1244,13 @@ class EmissorApp(ctk.CTk):
 
     def iniciar_emissao(self):
         if self.emissao_em_andamento:
-            self.logar("Ja existe uma emissao em andamento.")
+            self.logar("Já existe uma emissão em andamento.")
+            return
+        if not self._tem_recurso(RECURSO_EMISSAO):
+            self.logar("Seu plano atual não inclui emissão de NFS-e.")
+            self.label_status_execucao.configure(
+                text="Status atual: emissão bloqueada pelo plano contratado."
+            )
             return
 
         try:
@@ -1001,6 +1305,7 @@ class EmissorApp(ctk.CTk):
                 input_callback=self.solicitar_input_interativo,
             )
 
+            self.config_data = carregar_config()
             filtros = {
                 "ano": self.combo_ano.get(),
                 "mes": self.combo_mes.get(),
@@ -1009,6 +1314,10 @@ class EmissorApp(ctk.CTk):
                 "especie": especie,
                 "modo_emissao": self.modo.get(),
                 "itens": itens if itens else None,
+                "nota_fiscal_teste": bool(self.nota_fiscal_teste.get()),
+                "confirmacao_manual_emissao": bool(
+                    self.config_data.get("confirmacao_manual_emissao", True)
+                ),
             }
 
             resultado = orquestrador.executar(
@@ -1016,7 +1325,7 @@ class EmissorApp(ctk.CTk):
                 filtros=filtros,
                 headless=False,
             ) or {}
-            mensagem_final = resultado.get("mensagem_final", "lote concluido.")
+            mensagem_final = resultado.get("mensagem_final", "lote concluído.")
         except Exception as exc:
             traceback.print_exc()
             mensagem_final = f"erro - {exc}"
@@ -1026,6 +1335,11 @@ class EmissorApp(ctk.CTk):
 
     def atualizar_dashboard(self):
         try:
+            if not self.base_notas:
+                self.base_notas = self._resolver_base_notas()
+                self.caminho_base = self.base_notas
+                self.label_base.configure(text=f"Base: {self.base_notas or 'não configurada'}")
+
             caminho = montar_caminho_planilha(
                 self.base_notas,
                 self.combo_ano.get(),
@@ -1042,7 +1356,7 @@ class EmissorApp(ctk.CTk):
             xls = pd.ExcelFile(caminho, engine="openpyxl")
             nome_aba = next((aba for aba in xls.sheet_names if aba.strip().upper() == "NOTAS"), None)
             if not nome_aba:
-                self.logar("Aba NOTAS nao encontrada na planilha.")
+                self.logar("Aba NOTAS não encontrada na planilha.")
                 return
 
             df = pd.read_excel(xls, sheet_name=nome_aba)
@@ -1056,27 +1370,35 @@ class EmissorApp(ctk.CTk):
             self.lbl_valor.configure(text=f"R$ {valor_total:,.2f}")
             self.lbl_emitidas.configure(text=str(emitidas))
             self.lbl_importadas.configure(text=str(contar_notas_importadas()))
+        except FileNotFoundError:
+            self.lbl_pendentes.configure(text="0")
+            self.lbl_valor.configure(text="R$ 0,00")
+            self.lbl_emitidas.configure(text="0")
+            self.lbl_importadas.configure(text=str(contar_notas_importadas()))
+            self.atualizar_opcoes_planilha()
         except Exception as exc:
             self.logar(f"Erro ao atualizar dashboard: {exc}")
 
     def _tornar_card_clicavel(self, card, command, button_text):
         botao = ctk.CTkButton(
-            card,
+            card.action_area,
             text=button_text,
-            width=84,
-            height=26,
+            width=96,
+            height=28,
             fg_color="transparent",
-            hover_color=THEME["surface_muted"],
+            hover_color=THEME["surface_alt"],
             text_color=THEME["primary"],
-            border_width=0,
+            border_width=1,
+            border_color=THEME["border_strong"],
+            corner_radius=14,
             font=("Segoe UI Semibold", 12, "bold"),
             command=command,
         )
-        botao.place(relx=1.0, y=16, x=-18, anchor="ne")
+        botao.pack(anchor="e")
 
         card.bind("<Button-1>", lambda _event: command())
         for child in card.winfo_children():
-            if child is not botao:
+            if child is not card.action_area:
                 child.bind("<Button-1>", lambda _event: command())
 
     def _abrir_janela_unica(self, referencia, factory):
@@ -1099,18 +1421,23 @@ class EmissorApp(ctk.CTk):
 
 def iniciar_sistema():
     criar_banco()
-    login = LoginWindow()
-    login.mainloop()
 
-    if not login.usuario_autenticado:
-        return
+    while True:
+        login = LoginWindow()
+        login.mainloop()
 
-    if primeiro_acesso():
-        tela = TelaConfig(login.usuario_autenticado)
-        tela.mainloop()
+        if not login.usuario_autenticado:
+            return
 
-    app = EmissorApp(login.usuario_autenticado)
-    app.mainloop()
+        if primeiro_acesso():
+            tela = TelaConfig(login.usuario_autenticado)
+            tela.mainloop()
+
+        app = EmissorApp(login.usuario_autenticado)
+        app.mainloop()
+
+        if not getattr(app, "logout_requested", False):
+            return
 
 
 if __name__ == "__main__":

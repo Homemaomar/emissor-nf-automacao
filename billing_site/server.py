@@ -10,6 +10,7 @@ from database.db import (
     atualizar_status_cobranca,
     atualizar_checkout_portal_status,
     autenticar_cliente_portal,
+    avaliar_licenca_portal,
     avaliar_status_cobranca,
     confirmar_pagamento_portal,
     criar_banco,
@@ -194,6 +195,19 @@ def _layout(conteudo, titulo="MBS Fiscal SaaS", mensagem="", erro=""):
       grid-template-columns: 1.4fr .9fr;
       gap: 22px;
     }}
+    .premium-hero {{
+      background:
+        linear-gradient(135deg, rgba(67,144,255,.20), rgba(53,214,151,.08)),
+        linear-gradient(180deg, rgba(20,37,66,.98), rgba(10,18,33,.98));
+      border: 1px solid rgba(67,144,255,.24);
+      border-radius: 30px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 22px;
+      align-items: stretch;
+    }}
     .eyebrow {{
       color: var(--blue);
       text-transform: uppercase;
@@ -245,6 +259,17 @@ def _layout(conteudo, titulo="MBS Fiscal SaaS", mensagem="", erro=""):
       margin-top: 18px;
     }}
     .card {{ padding: 22px; }}
+    .download-card {{
+      background: rgba(7,16,29,.52);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }}
+    .download-card h2 {{
+      margin: 18px 0 10px;
+      font-size: 28px;
+    }}
     .span-3 {{ grid-column: span 3; }}
     .span-4 {{ grid-column: span 4; }}
     .span-5 {{ grid-column: span 5; }}
@@ -368,6 +393,11 @@ def _layout(conteudo, titulo="MBS Fiscal SaaS", mensagem="", erro=""):
       background: linear-gradient(135deg, #4390ff, #2c67db);
       color: white;
     }}
+    .download-button {{
+      min-height: 54px;
+      padding: 15px 20px;
+      font-size: 16px;
+    }}
     .btn-soft {{
       background: rgba(67,144,255,.10);
       color: var(--text);
@@ -436,6 +466,24 @@ def _layout(conteudo, titulo="MBS Fiscal SaaS", mensagem="", erro=""):
       grid-template-columns: repeat(2, 1fr);
       gap: 14px;
     }}
+    .feature-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }}
+    .feature {{
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255,255,255,.02);
+      display: grid;
+      gap: 6px;
+    }}
+    .feature span {{
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 13px;
+    }}
     .qr-box {{
       display: grid;
       place-items: center;
@@ -495,7 +543,7 @@ def _layout(conteudo, titulo="MBS Fiscal SaaS", mensagem="", erro=""):
       color: #dbe8ff;
     }}
     @media (max-width: 960px) {{
-      .hero, .plans, .steps, .form-grid, .checkout-methods {{
+      .hero, .premium-hero, .plans, .steps, .form-grid, .checkout-methods, .feature-grid {{
         grid-template-columns: 1fr;
       }}
       .span-3, .span-4, .span-5, .span-6, .span-7, .span-8, .span-12 {{
@@ -1240,6 +1288,10 @@ http://{HOST}:{PORT}/admin</div>
             return self._redirect("/?msg=" + urlencode({"": "Sessão encerrada com sucesso."})[1:], clear_cookie=True)
 
         if parsed.path == "/api/status":
+            email = query.get("email", [""])[0]
+            if email:
+                machine_id = query.get("machine_id", [""])[0]
+                return self._json(avaliar_licenca_portal(email, machine_id))
             return self._json(avaliar_status_cobranca())
         if parsed.path == "/api/assinatura":
             return self._json(obter_assinatura_sistema() or {})

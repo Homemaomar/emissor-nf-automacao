@@ -10,7 +10,7 @@ def realizar_login(driver, inscricao, senha):
 
     if not inscricao or not senha:
         raise ValueError(
-            "Credenciais da prefeitura nao configuradas. Atualize login e senha nas configuracoes antes de emitir."
+            "Credenciais da prefeitura não configuradas. Atualize login e senha nas configurações antes de emitir."
         )
 
     wait = WebDriverWait(driver, 5)

@@ -21,7 +21,7 @@ class ImportacaoWindow(ctk.CTkToplevel):
         super().__init__(parent)
 
         self.usuario = usuario
-        self.title("Central de importacao")
+        self.title("Central de importação")
         self.geometry("1100x720")
         self.configure(fg_color="#09111f")
         self.transient(parent)
@@ -51,7 +51,7 @@ class ImportacaoWindow(ctk.CTkToplevel):
 
         ctk.CTkLabel(
             hero,
-            text="Central de importacao e recorrencia",
+            text="Central de importação e recorrência",
             font=("Segoe UI Semibold", 28, "bold"),
             text_color="#f5f7fb",
         ).pack(anchor="w", padx=20, pady=(20, 6))
@@ -59,8 +59,8 @@ class ImportacaoWindow(ctk.CTkToplevel):
         ctk.CTkLabel(
             hero,
             text=(
-                "Importe multiplos XMLs ou planilhas para o banco e aproveite "
-                "modelos recorrentes para clientes que repetem notas todo mes."
+                "Importe múltiplos XMLs ou planilhas para o banco e aproveite "
+                "modelos recorrentes para clientes que repetem notas todo mês."
             ),
             font=("Segoe UI", 13),
             text_color="#9cadc8",
@@ -81,7 +81,7 @@ class ImportacaoWindow(ctk.CTkToplevel):
 
         ctk.CTkSwitch(
             filtros,
-            text="Destacar importacao mais recente",
+            text="Destacar importação mais recente",
             variable=self.filtro_ultimas,
             command=self.recarregar,
             progress_color="#2c6bed",
@@ -117,7 +117,7 @@ class ImportacaoWindow(ctk.CTkToplevel):
 
         ctk.CTkLabel(
             lateral,
-            text="Acoes",
+            text="Ações",
             font=("Segoe UI Semibold", 18, "bold"),
             text_color="#f5f7fb",
         ).pack(anchor="w", padx=18, pady=(18, 12))
@@ -151,7 +151,7 @@ class ImportacaoWindow(ctk.CTkToplevel):
 
         ctk.CTkButton(
             lateral,
-            text="Limpar todas as importacoes",
+            text="Limpar todas as importações",
             height=40,
             fg_color="#7b2430",
             hover_color="#8b2b38",
@@ -216,7 +216,7 @@ class ImportacaoWindow(ctk.CTkToplevel):
     def _limpar_sem_cliente(self):
         removidas = excluir_notas_importadas_sem_cliente()
         self.label_feedback.configure(
-            text=f"{removidas} importacao(oes) sem cliente foram removidas."
+            text=f"{removidas} importação(ões) sem cliente foram removidas."
         )
         self.recarregar()
 
@@ -264,10 +264,10 @@ class ImportacaoWindow(ctk.CTkToplevel):
 
                 titulo = nota.get("cliente_nome") or "Sem cliente identificado"
                 origem = nota.get("source_type", "").upper()
-                descricao = nota.get("descricao") or "Sem descricao"
+                descricao = nota.get("descricao") or "Sem descrição"
                 valor = float(nota.get("valor_servico", 0) or 0)
                 score = int(nota.get("recorrente_score", 0) or 0)
-                tag = "ULTIMA IMPORTACAO | " if destaque else ""
+                tag = "ÚLTIMA IMPORTAÇÃO | " if destaque else ""
 
                 ctk.CTkLabel(
                     card,
@@ -281,7 +281,7 @@ class ImportacaoWindow(ctk.CTkToplevel):
                     text=(
                         f"{descricao}\n"
                         f"Valor: R$ {valor:,.2f} | "
-                        f"Recorrencia: {score}% | "
+                        f"Recorrência: {score}% | "
                         f"Importado por: {nota.get('imported_by_name', '-')}"
                     ),
                     font=("Segoe UI", 12),

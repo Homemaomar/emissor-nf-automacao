@@ -7,6 +7,8 @@ def normalizar_texto(valor):
         return ""
 
     valor = str(valor).strip()
+    if valor.lower() in {"nan", "none", "nat"}:
+        return ""
 
     # 🔥 REMOVE ASPAS E ESPAÇOS ESCONDIDOS
     valor = valor.replace('"', '').replace("'", "")

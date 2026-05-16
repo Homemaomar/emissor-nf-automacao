@@ -7,6 +7,10 @@ from envio import EnvioService
 
 from automacao.emissor_nfse import EmissorNFSe
 
+RECURSO_EMISSAO = "emissao_nfse"
+RECURSO_EMAIL = "envio_email"
+RECURSO_WHATSAPP = "envio_whatsapp"
+
 
 class OrquestradorEmissao:
     def __init__(
@@ -30,6 +34,10 @@ class OrquestradorEmissao:
         self.progresso_callback = progresso_callback
         self.finish_callback = finish_callback
         self.input_callback = input_callback
+        self.recursos_plano = set(self.usuario.get("recursos") or [])
+
+    def _tem_recurso(self, recurso):
+        return recurso in self.recursos_plano or "*" in self.recursos_plano
 
     def _log(self, mensagem):
         if callable(self.log_callback):
@@ -87,6 +95,18 @@ class OrquestradorEmissao:
         }
 
     def _executar_pos_emissao(self, caminho_planilha):
+        enviar_email = self._tem_recurso(RECURSO_EMAIL)
+        enviar_whatsapp = self._tem_recurso(RECURSO_WHATSAPP)
+
+        if not enviar_email and not enviar_whatsapp:
+            self._log("Plano atual nao inclui pos-emissao por email ou WhatsApp.")
+            return
+
+        if not enviar_email:
+            self._log("Plano atual nao inclui envio por email. Etapa ignorada.")
+        if not enviar_whatsapp:
+            self._log("Plano atual nao inclui envio por WhatsApp. Etapa ignorada.")
+
         email_config = self._carregar_email_config()
 
         service = EnvioService(
@@ -98,8 +118,8 @@ class OrquestradorEmissao:
             max_tentativas=2,
         )
         service.processar_envios(
-            enviar_email=True,
-            enviar_whatsapp=True,
+            enviar_email=enviar_email,
+            enviar_whatsapp=enviar_whatsapp,
         )
 
     def executar(self, caminho_planilha, filtros, headless=False):
@@ -112,6 +132,16 @@ class OrquestradorEmissao:
         self._log(f"Log da execucao: {caminho_log}")
         logger.info("===== INICIO DA EXECUCAO =====")
         logger.info("Usuario autenticado: %s", self.usuario.get("nome", "Sistema"))
+        logger.info("Recursos do plano: %s", sorted(self.recursos_plano))
+
+        if not self._tem_recurso(RECURSO_EMISSAO):
+            mensagem = "Seu plano atual nao inclui emissao de NFS-e."
+            logger.warning(mensagem)
+            self._log(mensagem)
+            return {
+                "status_final": "BLOQUEADO",
+                "mensagem_final": "emissao bloqueada pelo plano contratado.",
+            }
 
         try:
             notas = self.leitor_planilha.listar_notas_pendentes(
@@ -145,6 +175,8 @@ class OrquestradorEmissao:
             input_callback=self.input_callback,
             caminho_base=caminho_planilha,
             pasta_saida_base=r"C:\Notas",
+            modo_teste=bool(filtros.get("nota_fiscal_teste", True)),
+            confirmacao_manual=bool(filtros.get("confirmacao_manual_emissao", True)),
         )
 
         houve_erros = False
@@ -271,7 +303,16 @@ class OrquestradorEmissao:
 
             if houve_emitidas:
                 try:
-                    self._log("Iniciando pos-emissao: email e WhatsApp.")
+                    canais = []
+                    if self._tem_recurso(RECURSO_EMAIL):
+                        canais.append("email")
+                    if self._tem_recurso(RECURSO_WHATSAPP):
+                        canais.append("WhatsApp")
+                    self._log(
+                        "Iniciando pos-emissao: " + " e ".join(canais) + "."
+                        if canais
+                        else "Pos-emissao nao incluida no plano atual."
+                    )
                     self._executar_pos_emissao(caminho_planilha)
                 except Exception as exc:
                     houve_erros = True

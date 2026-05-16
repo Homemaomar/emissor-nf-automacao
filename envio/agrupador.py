@@ -1,3 +1,5 @@
+import re
+
 from .modelos import NotaEnvio
 from .utils_envio import (
     arquivo_existe,
@@ -19,6 +21,23 @@ class AgrupadorEnvio:
             if coluna_real:
                 return row[coluna_real]
         return default
+
+    def _converter_valor(self, valor):
+        texto = normalizar_texto(valor)
+        if not texto:
+            return 0.0
+
+        texto = texto.replace("R$", "").replace(" ", "")
+        if "," in texto:
+            texto = texto.replace(".", "").replace(",", ".")
+
+        try:
+            return float(texto)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _email_valido(self, email):
+        return bool(re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", str(email or "").strip()))
 
     def _propagar_canais_contato(self, notas):
         email_por_chave = {}
@@ -124,8 +143,8 @@ class AgrupadorEnvio:
                 secretaria=normalizar_texto(
                     self._obter_valor(row, mapa_colunas, "SECRETARIA", "CLIENTE")
                 ),
-                valor=float(
-                    self._obter_valor(row, mapa_colunas, "VALOR", default=0) or 0
+                valor=self._converter_valor(
+                    self._obter_valor(row, mapa_colunas, "VALOR", default=0)
                 ),
                 especie=normalizar_texto(
                     self._obter_valor(row, mapa_colunas, "ESPECIE", "ESPÉCIE")
@@ -166,7 +185,7 @@ class AgrupadorEnvio:
                 continue
 
             email = (nota.email or "").strip().lower()
-            if not email:
+            if not email or not self._email_valido(email):
                 self.log(f"ITEM {nota.item}: sem e-mail -> ignorado no EMAIL")
                 continue
 

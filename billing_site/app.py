@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import secrets
+from datetime import datetime
 from html import escape
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -9,7 +10,7 @@ from urllib.parse import urlencode
 from urllib.request import Request as HttpRequest, urlopen
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 
 from billing_site.server import (
     PLAN_CONTENT,
@@ -25,6 +26,7 @@ from database.db import (
     atualizar_status_cobranca,
     autenticar_cliente_portal,
     autenticar_usuario,
+    avaliar_licenca_portal,
     avaliar_status_cobranca,
     carregar_config,
     confirmar_pagamento_portal,
@@ -34,6 +36,7 @@ from database.db import (
     criar_usuario,
     gerar_cobranca_mensal_atual,
     iniciar_checkout_portal,
+    iniciar_trial_portal,
     listar_assinaturas_portal,
     listar_cobrancas_mensais,
     listar_cobrancas_portal_cliente,
@@ -53,6 +56,10 @@ APP_HOST = os.environ.get("BILLING_SITE_HOST", "127.0.0.1")
 APP_PORT = int(os.environ.get("BILLING_SITE_PORT", "8765"))
 PUBLIC_BASE_URL = os.environ.get("BILLING_SITE_PUBLIC_URL", f"http://{APP_HOST}:{APP_PORT}")
 SECURE_COOKIES = os.environ.get("BILLING_SITE_SECURE_COOKIES", "0").strip() in {"1", "true", "True"}
+EXECUTABLE_DOWNLOAD_PATH = os.environ.get(
+    "MBS_EXECUTABLE_DOWNLOAD_PATH",
+    "release/MBS-Fiscal-Portatil.zip",
+)
 
 CLIENT_SESSIONS = {}
 ADMIN_SESSIONS = {}
@@ -328,14 +335,64 @@ def _is_mercadopago_checkout(checkout):
     return bool((checkout or {}).get("external_ref"))
 
 
+def _parse_datetime(value):
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        return None
+
+
+def _download_path():
+    path = Path(EXECUTABLE_DOWNLOAD_PATH)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    return path
+
+
+def _cliente_premium(cliente):
+    assinatura = obter_assinatura_portal_ativa(cliente["id"], incluir_checkout=False)
+    if not assinatura:
+        return False, None
+
+    status = str(assinatura.get("status") or "").strip().lower()
+    if status not in {"active", "paid", "trial"}:
+        return False, assinatura
+
+    vencimento = _parse_datetime(assinatura.get("next_due_at"))
+    if vencimento and vencimento < datetime.now():
+        return False, assinatura
+
+    return True, assinatura
+
+
+def _trial_resumo(assinatura):
+    if str((assinatura or {}).get("status") or "").strip().lower() != "trial":
+        return ""
+    restantes = assinatura.get("trial_days_remaining")
+    if restantes is None:
+        return "Teste grátis ativo por tempo limitado."
+    if int(restantes) <= 0:
+        return "Teste grátis encerrado. Atualize o pagamento para continuar usando."
+    unidade = "dia" if int(restantes) == 1 else "dias"
+    return f"Teste grátis: restam {int(restantes)} {unidade}."
+
+
 def _render_nav(cliente=None, admin=None):
     if admin:
-        admin_links = '<a href="/admin" class="primary">Admin</a><a href="/admin/logout">Sair do admin</a>'
+        admin_links = (
+            '<a href="/admin" class="primary">Admin</a>'
+            '<a href="/premium">Download</a>'
+            '<a href="/admin/logout">Sair do admin</a>'
+        )
     else:
         admin_destino = "/admin/bootstrap" if _admin_bootstrap_needed() else "/admin/login"
         admin_links = f'<a href="{admin_destino}">Admin</a>'
     cliente_links = (
         '<a href="/portal" class="primary">Area do usuario</a>'
+        '<a href="/premium">Download</a>'
         '<a href="/logout">Sair</a>'
     ) if cliente else (
         '<a href="/login">Entrar</a>'
@@ -389,7 +446,8 @@ def _render_home(request: Request, mensagem="", erro=""):
               <h3>{escape(plano.get('nome', 'Plano'))}</h3>
               <div class="plan-price">{escape(_fmt_money(plano.get('valor_mensal', 0)))}</div>
               <div class="small"><strong>{escape(conteudo_plano.get('headline', 'Plano pronto para operacao fiscal.'))}</strong></div>
-              <div class="small">{escape(conteudo_plano.get('pitch', 'Ciclo mensal com liberacao dos recursos do sistema conforme o plano contratado.'))}</div>
+              <div class="small">{escape(conteudo_plano.get('pitch', 'Ciclo mensal com liberação dos recursos do sistema conforme o plano contratado.'))}</div>
+              <div class="small"><strong>Inclui 3 dias de teste grátis.</strong> Depois desse período, o sistema só continua liberado com a mensalidade paga.</div>
               <div class="small">O que o cliente ganha:</div>
               <ul>{ganhos or recursos}</ul>
               <a class="button btn-primary" href="/contratar?plan={escape(plano.get('code', ''))}">Escolher plano</a>
@@ -401,33 +459,33 @@ def _render_home(request: Request, mensagem="", erro=""):
     <section class="hero">
       <div>
         <div class="eyebrow">Portal Comercial</div>
-        <h1>Escolha o plano ideal, conclua a contratacao e acompanhe sua assinatura</h1>
-        <p>Este portal reune a vitrine dos planos, autenticacao do cliente, contratacao, checkout e area do usuario com assinatura ativa, historico financeiro e recursos liberados.</p>
+        <h1>Teste o MBS Fiscal por 3 dias e ative sua mensalidade quando estiver pronto</h1>
+        <p>Crie sua conta, baixe o sistema e use o plano escolhido por 3 dias grátis. Ao final do teste, o acesso fica bloqueado automaticamente caso a mensalidade ainda não esteja paga.</p>
         <div class="steps">
-          <div class="step"><strong>1. Escolha o plano</strong><div class="small">O cliente comeca pela pagina inicial e seleciona a oferta ideal.</div></div>
-          <div class="step"><strong>2. Entre ou cadastre-se</strong><div class="small">Se ja tiver conta, faz login. Se nao, cria a conta com os dados do portal.</div></div>
-          <div class="step"><strong>3. Checkout</strong><div class="small">Depois do cadastro, escolhe PIX ou cartao e entra na area do usuario.</div></div>
+          <div class="step"><strong>1. Escolha o plano</strong><div class="small">O cliente começa pela página inicial e seleciona a oferta ideal para testar.</div></div>
+          <div class="step"><strong>2. Teste por 3 dias</strong><div class="small">Após o cadastro, a área premium e o desktop ficam liberados durante o período de avaliação.</div></div>
+          <div class="step"><strong>3. Mantenha ativo</strong><div class="small">Pague por PIX ou cartão para continuar usando depois que a contagem terminar.</div></div>
         </div>
       </div>
       <div class="hero-side">
         <div class="meta-card">
-          <div class="meta-label">Operacao</div>
+          <div class="meta-label">Operação</div>
           <div class="meta-value">Portal online</div>
         </div>
         <div class="meta-card">
           <div class="meta-label">Portal do cliente</div>
-          <div class="meta-value">{escape(cliente.get('nome')) if cliente else 'Nao autenticado'}</div>
+          <div class="meta-value">{escape(cliente.get('nome')) if cliente else 'Não autenticado'}</div>
         </div>
         <div class="meta-card">
-          <div class="meta-label">Proximo passo</div>
-          <div class="meta-value">{'Ir para checkout' if cliente else 'Escolher plano'}</div>
+          <div class="meta-label">Teste grátis</div>
+          <div class="meta-value">3 dias liberados</div>
         </div>
       </div>
     </section>
     <section class="grid">
       <article class="card span-12">
-        <h2 class="section-title">Planos disponiveis</h2>
-        <p class="subtitle">Cada plano foi apresentado para conduzir o cliente da escolha ate a ativacao, com posicionamento comercial claro e foco em conversao.</p>
+        <h2 class="section-title">Planos disponíveis</h2>
+        <p class="subtitle">O cadastro libera 3 dias de avaliação. Depois disso, a licença do desktop só permanece ativa com pagamento confirmado.</p>
         <div class="plans">{''.join(plan_cards)}</div>
       </article>
     </section>
@@ -442,9 +500,9 @@ def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
     plano = planos.get(plano_code) if plano_code else None
     titulo = "Entrar na conta" if modo == "login" else "Criar conta"
     subtitulo = (
-        "Entre com seu email para continuar a contratacao do plano."
+        "Entre com seu email para continuar a contratação do plano."
         if modo == "login"
-        else "Cadastre os dados do cliente para seguir para o checkout."
+        else "Cadastre os dados do cliente para liberar 3 dias grátis de teste."
     )
     plano_box = ""
     if plano:
@@ -452,7 +510,7 @@ def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
         <div class="checkout-option">
           <div class="badge info">Plano selecionado</div>
           <h3 style="margin:10px 0 6px;">{escape(plano.get('nome', 'Plano'))}</h3>
-          <div class="small">{escape(_fmt_money(plano.get('valor_mensal', 0)))} por mes</div>
+          <div class="small">Teste grátis por 3 dias. Depois, {escape(_fmt_money(plano.get('valor_mensal', 0)))} por mês.</div>
         </div>
         """
     admin_test_action = ""
@@ -518,7 +576,7 @@ def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
       </article>
       <article class="card span-5">
         <h2 class="section-title">Fluxo da contratacao</h2>
-        <div class="small">Escolha do plano -> login ou cadastro -> checkout -> area do usuario.</div>
+        <div class="small">Escolha do plano → cadastro → 3 dias de teste → pagamento para manter ativo.</div>
         <div style="margin-top:14px;">{plano_box}</div>
       </article>
     </section>
@@ -553,10 +611,10 @@ def _render_choose_plan(request: Request, plano_code="", mensagem="", erro=""):
       <article class="card span-7">
         <div class="badge info">Plano escolhido</div>
         <h1 style="font-size:34px;margin:12px 0 10px;">{escape(plano.get('nome', 'Plano'))}</h1>
-        <p class="subtitle">Antes de seguir para o pagamento, o cliente pode entrar com a conta existente ou concluir um novo cadastro em poucos passos.</p>
+        <p class="subtitle">O cadastro libera 3 dias de teste grátis. Depois desse período, o sistema continua funcionando somente com a mensalidade paga.</p>
         <div class="actions">
           {admin_test_action}
-          <a class="button btn-primary" href="/login?plan={escape(plano_code)}">Ja tenho login</a>
+          <a class="button btn-primary" href="/login?plan={escape(plano_code)}">Já tenho login</a>
           <a class="button btn-soft" href="/cadastro?plan={escape(plano_code)}">Ainda nao tenho conta</a>
         </div>
       </article>
@@ -761,6 +819,7 @@ def _render_card_checkout(request: Request, cliente, checkout_id, erro=""):
 def _render_portal(request: Request, cliente, mensagem="", erro=""):
     admin = _admin_logado(request)
     assinatura = obter_assinatura_portal_ativa(cliente["id"], incluir_checkout=True)
+    premium_liberado, _assinatura_premium = _cliente_premium(cliente)
     cobrancas = listar_cobrancas_portal_cliente(cliente["id"], limit=24)
     cobranca_pendente = next(
         (c for c in cobrancas if str(c.get("status") or "").strip().lower() == "pendente"),
@@ -768,6 +827,8 @@ def _render_portal(request: Request, cliente, mensagem="", erro=""):
     )
     badge_texto, badge_tipo = _plan_badge(assinatura.get("status") if assinatura else "checkout")
     if assinatura:
+        status_assinatura = str(assinatura.get("status") or "").strip().lower()
+        trial_resumo = _trial_resumo(assinatura)
         recursos = "".join(
             f"<li>{escape(str(recurso).replace('_', ' ').title())}</li>"
             for recurso in assinatura.get("recursos", [])
@@ -787,14 +848,36 @@ def _render_portal(request: Request, cliente, mensagem="", erro=""):
               <a class="button btn-primary" href="/checkout/retomar?id={int(cobranca_pendente.get('id', 0))}">Continuar pagamento pendente</a>
             </div>
             """
+        trial_action = ""
+        if status_assinatura == "trial":
+            trial_action = f"""
+            <div class="checkout-option" style="margin-top:14px;">
+              <div class="small"><strong>{escape(trial_resumo)}</strong> Faça o pagamento antes do fim da avaliação para manter o desktop liberado sem interrupção.</div>
+              <div class="actions" style="margin-top:12px;">
+                <a class="button btn-primary" href="/checkout?plan={escape(assinatura.get('plano_code') or '')}">Ativar mensalidade</a>
+              </div>
+            </div>
+            """
+        premium_action = (
+            """
+            <div class="actions" style="margin-top:16px;">
+              <a class="button btn-primary" href="/premium">Acessar área premium</a>
+            </div>
+            """
+            if premium_liberado
+            else ""
+        )
         assinatura_box = f"""
         <div class="plan featured">
           <div class="badge {badge_tipo}">{escape(badge_texto)}</div>
           <h3>{escape(assinatura.get('plano_nome', 'Plano'))}</h3>
           <div class="plan-price">{escape(_fmt_money(assinatura.get('valor_mensal', 0)))}</div>
-          <div class="small">Proximo vencimento: {escape(assinatura.get('next_due_at') or 'Ainda nao definido')}</div>
+          <div class="small">Próximo vencimento: {escape(assinatura.get('next_due_at') or 'Ainda não definido')}</div>
+          {f'<div class="small"><strong>{escape(trial_resumo)}</strong></div>' if trial_resumo else ''}
           <ul>{recursos}</ul>
           {pending_action}
+          {trial_action}
+          {premium_action}
         </div>
         """
     else:
@@ -843,6 +926,102 @@ def _render_portal(request: Request, cliente, mensagem="", erro=""):
     </section>
     """
     return _layout(conteudo, titulo="Area do usuario", mensagem=mensagem, erro=erro)
+
+
+def _render_premium(request: Request, cliente, assinatura, mensagem="", erro="", admin_access=False):
+    admin = _admin_logado(request)
+    nav_cliente = None if admin_access else cliente
+    download = _download_path()
+    arquivo_disponivel = download.exists() and download.is_file()
+    tamanho = ""
+    if arquivo_disponivel:
+        tamanho_mb = download.stat().st_size / (1024 * 1024)
+        tamanho = f"{tamanho_mb:.1f} MB".replace(".", ",")
+
+    download_action = (
+        f"""
+        <a class="button btn-primary download-button" href="/premium/download">
+          Baixar MBS Fiscal para Windows
+        </a>
+        <div class="small">Pacote disponível: {escape(download.name)} {escape(f'({tamanho})' if tamanho else '')}</div>
+        """
+        if arquivo_disponivel
+        else """
+        <div class="flash flash-error" style="margin:0;">
+          O arquivo de instalação ainda não está disponível no servidor. Fale com o suporte para liberar o pacote.
+        </div>
+        """
+    )
+
+    status_assinatura = str((assinatura or {}).get("status") or "").strip().lower()
+    trial_resumo = _trial_resumo(assinatura)
+    badge_acesso = (
+        "Acesso administrativo"
+        if admin_access
+        else ("Teste grátis" if status_assinatura == "trial" else "Assinatura ativa")
+    )
+    texto_liberacao = (
+        "Você está visualizando esta área como administrador do servidor. "
+        "O download fica disponível para conferência, suporte e distribuição controlada."
+        if admin_access
+        else "A mensalidade está validada e o acesso ao executável foi liberado para esta conta."
+    )
+
+    if status_assinatura == "trial" and not admin_access:
+        texto_liberacao = (
+            f"{trial_resumo} O download e o desktop ficam liberados durante a avaliação."
+        )
+
+    conteudo = f"""
+    {_render_nav(nav_cliente, admin)}
+    <section class="premium-hero">
+      <div>
+        <div class="eyebrow">Área premium liberada</div>
+        <h1>Seu MBS Fiscal está pronto para trabalhar por você</h1>
+        <p>Parabéns, {escape(cliente.get('nome', ''))}. Você escolheu uma ferramenta feita para transformar emissão fiscal em rotina organizada: menos retrabalho, mais velocidade e uma operação muito mais previsível.</p>
+        {f'<p><strong>{escape(trial_resumo)}</strong> Para continuar depois do teste, mantenha a mensalidade ativa no portal.</p>' if trial_resumo else ''}
+        <div class="actions" style="margin-top:22px;">{download_action}</div>
+      </div>
+      <div class="download-card">
+        <div class="badge success">{escape(badge_acesso)}</div>
+        <h2>Download exclusivo</h2>
+        <div class="small">{escape(texto_liberacao)}</div>
+        <div class="meta-card" style="margin-top:16px;">
+          <div class="meta-label">Plano contratado</div>
+          <div class="meta-value">{escape(assinatura.get('plano_nome') or assinatura.get('plano_code') or 'MBS Fiscal')}</div>
+        </div>
+        <div class="meta-card" style="margin-top:12px;">
+          <div class="meta-label">Próximo vencimento</div>
+          <div class="meta-value">{escape(assinatura.get('next_due_at') or 'Não definido')}</div>
+        </div>
+      </div>
+    </section>
+    <section class="grid">
+      <article class="card span-4">
+        <h2 class="section-title">Instalação simples</h2>
+        <div class="small">Baixe o pacote, execute o sistema e entre com o email usado na compra para validar sua licença.</div>
+      </article>
+      <article class="card span-4">
+        <h2 class="section-title">Controle no seu fluxo</h2>
+        <div class="small">A emissão, os filtros, o envio e o histórico ficam concentrados em uma rotina pensada para uso diário.</div>
+      </article>
+      <article class="card span-4">
+        <h2 class="section-title">Compra inteligente</h2>
+        <div class="small">Você não comprou só um executável: garantiu tempo, organização e mais segurança operacional para sua base fiscal.</div>
+      </article>
+    </section>
+    <section class="grid">
+      <article class="card span-12">
+        <h2 class="section-title">Antes de começar</h2>
+        <div class="feature-grid">
+          <div class="feature"><strong>1. Use o email da assinatura</strong><span>É ele que libera o acesso no desktop.</span></div>
+          <div class="feature"><strong>2. Mantenha a mensalidade em dia</strong><span>A área premium e o sistema dependem da assinatura ativa.</span></div>
+          <div class="feature"><strong>3. Configure sua base</strong><span>Depois do primeiro acesso, informe a pasta das notas e suas credenciais fiscais.</span></div>
+        </div>
+      </article>
+    </section>
+    """
+    return _layout(conteudo, titulo="Área premium MBS Fiscal", mensagem=mensagem, erro=erro)
 
 
 def _render_admin_login(request: Request, erro=""):
@@ -1097,6 +1276,86 @@ def portal_page(request: Request, msg: str = "", err: str = ""):
     return _html(_render_portal(request, cliente, msg, err))
 
 
+@app.get("/premium", response_class=HTMLResponse)
+def premium_page(request: Request, msg: str = "", err: str = ""):
+    cliente = _cliente_logado(request)
+    admin = _admin_logado(request)
+    if admin and not cliente:
+        assinatura = obter_assinatura_sistema() or {
+            "status": "active",
+            "plano_nome": "MBS Fiscal",
+            "plano_code": "admin",
+            "next_due_at": "Acesso administrativo",
+        }
+        cliente_admin = {
+            "id": 0,
+            "nome": admin.get("nome") or "Administrador",
+            "email": admin.get("username") or "",
+        }
+        return _html(
+            _render_premium(
+                request,
+                cliente_admin,
+                assinatura,
+                msg,
+                err,
+                admin_access=True,
+            )
+        )
+    if not cliente:
+        return _redirect("/login?err=" + urlencode({"": "Faça login para acessar a área premium."})[1:])
+    liberado, assinatura = _cliente_premium(cliente)
+    if not liberado:
+        return _redirect(
+            "/portal?"
+            + urlencode(
+                {
+                    "err": (
+                        "A área premium fica disponível somente para clientes "
+                        "com mensalidade paga e assinatura ativa."
+                    )
+                }
+            )
+        )
+    return _html(_render_premium(request, cliente, assinatura, msg, err))
+
+
+@app.get("/premium/download")
+def premium_download(request: Request):
+    cliente = _cliente_logado(request)
+    admin = _admin_logado(request)
+    if not cliente and not admin:
+        return _redirect("/login?err=" + urlencode({"": "Faça login para baixar o sistema."})[1:])
+    if cliente:
+        liberado, _assinatura = _cliente_premium(cliente)
+    else:
+        liberado = bool(admin)
+    if not liberado:
+        return _redirect(
+            "/portal?"
+            + urlencode(
+                {
+                    "err": (
+                        "Download disponível somente para clientes com mensalidade paga."
+                    )
+                }
+            )
+        )
+
+    arquivo = _download_path()
+    if not arquivo.exists() or not arquivo.is_file():
+        return _redirect(
+            "/premium?"
+            + urlencode({"err": "Arquivo de instalação ainda não disponível no servidor."})
+        )
+
+    return FileResponse(
+        path=arquivo,
+        media_type="application/zip",
+        filename=arquivo.name,
+    )
+
+
 @app.get("/admin/login", response_class=HTMLResponse)
 def admin_login_page(request: Request, err: str = ""):
     if _admin_bootstrap_needed():
@@ -1145,7 +1404,9 @@ def admin_logout(request: Request):
 
 
 @app.get("/api/status")
-def api_status():
+def api_status(email: str = "", machine_id: str = ""):
+    if email:
+        return JSONResponse(avaliar_licenca_portal(email, machine_id))
     return JSONResponse(avaliar_status_cobranca())
 
 
@@ -1199,9 +1460,10 @@ def auth_register(
         documento=documento,
         endereco=endereco,
     )
+    iniciar_trial_portal(cliente["id"], plan)
     token = secrets.token_urlsafe(24)
     CLIENT_SESSIONS[token] = cliente["id"]
-    destino = "/checkout?" + urlencode({"plan": plan}) if plan else "/portal"
+    destino = "/portal?" + urlencode({"msg": "Teste grátis liberado por 3 dias. A contagem aparece no portal e no sistema desktop."})
     response = _redirect(destino)
     _set_cookie(response, "portal_session", token)
     return response

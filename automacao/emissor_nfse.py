@@ -1,7 +1,9 @@
-print("🔥 INICIO emissor_nfse")
 import os
 import time
 import shutil
+import re
+import urllib.request
+from urllib.parse import urljoin
 
 from pathlib import Path
 from datetime import datetime
@@ -23,10 +25,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 
 
-print("BaseWebDriver:", BaseWebDriver)
-print("SiteStepsMixin:", SiteStepsMixin)
-print("🔥 ANTES DA CLASSE")
-
 class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
 
     def __init__(
@@ -39,7 +37,9 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         pasta_evidencias="logs/evidencias",
         driver_path=None,
         caminho_base=None,                 # 📥 EXCEL (.xlsm)
-        pasta_saida_base=r"C:\Notas"       # 📤 SAÍDA
+        pasta_saida_base=r"C:\Notas",       # 📤 SAÍDA
+        modo_teste=True,
+        confirmacao_manual=True,
     ):
         super().__init__(
             logger=logger,
@@ -94,7 +94,8 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         # ===============================
         # 🧪 MODO TESTE
         # ===============================
-        self.modo_teste = True
+        self.modo_teste = bool(modo_teste)
+        self.confirmacao_manual = bool(confirmacao_manual)
 
         # ===============================
         # 📁 PASTA TEMP
@@ -851,6 +852,10 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         Compatível com UI (callback) e terminal (fallback).
         """
 
+        if not getattr(self, "confirmacao_manual", True):
+            self._log("Revisão manual desativada; emissão confirmada automaticamente.")
+            return "1"
+
         self._log("\n==============================")
         self._log("REVISÃO FINAL - PÁGINA 4")
         self._log("==============================")
@@ -1070,7 +1075,7 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
 
             else:
                 caminho_pdf, caminho_xml = self.organizar_arquivos_emitidos(
-                    numero_nfse, item, contexto
+                    numero_nfse, item, contexto, resultado
                 )
             print("DEBUG PDF:", caminho_pdf)
             print("DEBUG XML:", caminho_xml)
@@ -1166,9 +1171,8 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
 
         wait = WebDriverWait(self.driver, 30)
 
-        self._log("🚀 Confirmando emissão da NFS-e...")
+        self._log("Confirmando emiss?o da NFS-e...")
 
-        # 1. clicar emitir
         botao_emitir = wait.until(
             EC.element_to_be_clickable(
                 (By.XPATH, "//button[.//span[contains(text(),'Emitir')]]")
@@ -1177,30 +1181,59 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
 
         self.driver.execute_script("arguments[0].click();", botao_emitir)
 
-        # 2. aguardar retorno (SUCESSO)
-        self._log("⏳ Aguardando retorno da emissão...")
+        self._log("Aguardando links de download da NFS-e...")
 
-        elemento_retorno = wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//*[contains(text(),'NFS-e') or contains(text(),'Número')]")
-            )
+        xml_link = wait.until(
+            EC.presence_of_element_located((By.ID, "btnDownloadXml"))
+        )
+        pdf_link = wait.until(
+            EC.presence_of_element_located((By.ID, "btnDownloadDANFSE"))
         )
 
-        texto = elemento_retorno.text
+        xml_href = xml_link.get_attribute("href") or ""
+        pdf_href = pdf_link.get_attribute("href") or ""
 
-        import re
-        match = re.search(r"\d+", texto)
+        match = re.search(r"/NFSe/([^/?#]+)", xml_href)
+        numero_nfse = match.group(1) if match else ""
 
-        if not match:
-            raise EmissaoNaoAutorizadaErro("❌ Número da NFS-e não encontrado")
+        if not numero_nfse:
+            raise EmissaoNaoAutorizadaErro("Número da NFS-e não encontrado")
 
-        numero_nfse = match.group()
+        self._log(f"NFS-e emitida: {numero_nfse}")
 
-        self._log(f"✅ NFS-e emitida: {numero_nfse}")
+        return {
+            "numero_nfse": numero_nfse,
+            "download_xml_url": xml_href,
+            "download_pdf_url": pdf_href,
+        }
 
-        return {"numero_nfse": numero_nfse}
+    def _baixar_arquivo_autenticado(self, url: str, destino: Path):
+        if not url:
+            raise EmissaoNaoAutorizadaErro("Link de download não encontrado")
+
+        url_absoluta = urljoin(self.driver.current_url, url)
+        cookies = "; ".join(
+            f"{cookie['name']}={cookie['value']}"
+            for cookie in self.driver.get_cookies()
+        )
+        requisicao = urllib.request.Request(url_absoluta, headers={"Cookie": cookies})
+
+        with urllib.request.urlopen(requisicao, timeout=60) as resposta:
+            conteudo = resposta.read()
+
+        if not conteudo:
+            raise EmissaoNaoAutorizadaErro("Download retornou arquivo vazio")
+
+        destino.write_bytes(conteudo)
+
     # ORGANIZAR ARQUIVOS
-    def organizar_arquivos_emitidos(self, numero_nfse: str, item: str, contexto: dict):
+    def organizar_arquivos_emitidos(
+        self,
+        numero_nfse: str,
+        item: str,
+        contexto: dict,
+        dados_download: dict | None = None,
+    ):
 
         ano = contexto["ano"]
         mes = contexto["mes"]
@@ -1210,19 +1243,23 @@ class EmissorNFSe(BaseWebDriver, SiteStepsMixin):
         pasta.mkdir(parents=True, exist_ok=True)
 
         nome = f"NFSE_{numero_nfse}_{item}"
+        caminho_pdf = self._garantir_nome_unico(pasta / f"{nome}.pdf")
+        caminho_xml = self._garantir_nome_unico(pasta / f"{nome}.xml")
+        dados_download = dados_download or {}
 
-        caminho_pdf = str(pasta / f"{nome}.pdf")
-        caminho_xml = str(pasta / f"{nome}.xml")
+        self._baixar_arquivo_autenticado(
+            dados_download.get("download_pdf_url", ""),
+            caminho_pdf,
+        )
+        self._baixar_arquivo_autenticado(
+            dados_download.get("download_xml_url", ""),
+            caminho_xml,
+        )
 
-        if not os.path.exists(caminho_pdf):
-            with open(caminho_pdf, "wb") as f:
-                f.write(b"")
+        self._log(f"DANFSe salva em: {caminho_pdf}")
+        self._log(f"XML salvo em: {caminho_xml}")
 
-        if not os.path.exists(caminho_xml):
-            with open(caminho_xml, "wb") as f:
-                f.write(b"")
-            # 🔥 CORREÇÃO
-        return caminho_pdf, caminho_xml
+        return str(caminho_pdf), str(caminho_xml)
 
     def _simular_download_e_organizacao(self, numero_nfse, dados_nota):
 

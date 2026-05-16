@@ -2,14 +2,20 @@ import hashlib
 import hmac
 import json
 import os
+import platform
 import re
 import sqlite3
+import urllib.request
+import uuid
+from urllib.parse import urlencode
 from datetime import datetime, timedelta
 from pathlib import Path
 
 
 DB_PATH = Path("config.db")
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+TRIAL_DAYS = int(os.environ.get("MBS_TRIAL_DAYS", "3") or 3)
+DEFAULT_TRIAL_PLAN_CODE = os.environ.get("MBS_TRIAL_PLAN_CODE", "emissor_email_whatsapp")
 PLANS_DEFAULT = (
     {
         "code": "emissor",
@@ -29,15 +35,15 @@ PLANS_DEFAULT = (
         "valor_mensal": 280.0,
         "recursos": ["emissao_nfse", "envio_email", "envio_whatsapp"],
     },
-    {
-        "code": "teste_mp",
-        "nome": "Teste Mercado Pago",
-        "valor_mensal": 1.0,
-        "recursos": ["validacao_pagamento"],
-    },
 )
+RETIRED_PLAN_CODES = {"teste_mp"}
 BILLING_ACTIVE_STATUSES = {"trial", "active", "paid", "development"}
 BILLING_BLOCKED_STATUSES = {"blocked", "suspended", "cancelled"}
+REMOTE_BILLING_ACTIVE_STATUSES = {"trial", "active", "paid"}
+DEFAULT_OWNER_EMAILS = {"mbs.busiines@gmail.com"}
+DEFAULT_BILLING_STATUS_URL = "https://mbsduodigital.com/api/status"
+MAX_OPERADORES_DELEGADOS = 3
+GESTOR_ROLES = {"admin", "gestor"}
 
 
 def _connect():
@@ -50,6 +56,41 @@ def _dict_factory(cursor, row):
 
 def _normalizar_email(email):
     return (email or "").strip().lower()
+
+
+def _emails_donos_sistema():
+    extras = {
+        _normalizar_email(email)
+        for email in os.environ.get("MBS_OWNER_EMAILS", "").split(",")
+        if email.strip()
+    }
+    return DEFAULT_OWNER_EMAILS | extras
+
+
+def usuario_dono_sistema(email):
+    return _normalizar_email(email) in _emails_donos_sistema()
+
+
+def obter_identificador_maquina():
+    partes = [
+        platform.system(),
+        platform.node(),
+        os.environ.get("COMPUTERNAME", ""),
+        str(uuid.getnode()),
+    ]
+    try:
+        import winreg
+
+        with winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\Microsoft\Cryptography",
+        ) as key:
+            partes.append(str(winreg.QueryValueEx(key, "MachineGuid")[0]))
+    except Exception:
+        pass
+
+    bruto = "|".join(str(parte or "").strip().lower() for parte in partes if parte)
+    return hashlib.sha256(bruto.encode("utf-8")).hexdigest()
 
 
 def _validar_email(email):
@@ -78,6 +119,31 @@ def _parse_iso_datetime(value):
         return datetime.fromisoformat(texto)
     except ValueError:
         return None
+
+
+def _dias_ate(vencimento):
+    if not vencimento:
+        return None
+    segundos = (vencimento - datetime.now()).total_seconds()
+    if segundos <= 0:
+        return 0
+    return int((segundos + 86399) // 86400)
+
+
+def _enriquecer_trial_assinatura(assinatura):
+    if not assinatura:
+        return assinatura
+
+    status = str(assinatura.get("status") or "").strip().lower()
+    if status != "trial":
+        return assinatura
+
+    vencimento = _parse_iso_datetime(assinatura.get("next_due_at"))
+    assinatura["trial_days_total"] = TRIAL_DAYS
+    assinatura["trial_days_remaining"] = _dias_ate(vencimento)
+    assinatura["trial_expires_at"] = assinatura.get("next_due_at") or ""
+    assinatura["trial_expired"] = bool(vencimento and vencimento < datetime.now())
+    return assinatura
 
 
 def _seed_planos(cursor):
@@ -109,6 +175,15 @@ def _seed_planos(cursor):
                 agora,
                 agora,
             ),
+        )
+    for code in RETIRED_PLAN_CODES:
+        cursor.execute(
+            """
+            UPDATE planos_cobranca
+            SET ativo = 0, updated_at = ?
+            WHERE code = ?
+            """,
+            (agora, code),
         )
 
 
@@ -403,11 +478,29 @@ def criar_banco():
         """
     )
 
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS portal_dispositivos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cliente_id INTEGER NOT NULL,
+            email TEXT NOT NULL,
+            machine_id TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active',
+            first_seen_at TEXT NOT NULL,
+            last_seen_at TEXT NOT NULL,
+            observacoes TEXT,
+            UNIQUE(email, machine_id),
+            FOREIGN KEY(cliente_id) REFERENCES portal_clientes(id)
+        )
+        """
+    )
+
     _ensure_column(cursor, "config", "recurrence_enabled", "INTEGER DEFAULT 0")
     _ensure_column(cursor, "config", "recurrence_frequency", "TEXT DEFAULT 'manual'")
     _ensure_column(cursor, "config", "notification_email", "TEXT DEFAULT ''")
     _ensure_column(cursor, "config", "smtp_sender_email", "TEXT DEFAULT ''")
     _ensure_column(cursor, "config", "smtp_sender_password", "TEXT DEFAULT ''")
+    _ensure_column(cursor, "config", "confirmacao_manual_emissao", "INTEGER DEFAULT 1")
     _ensure_column(cursor, "config", "mp_environment", "TEXT DEFAULT 'sandbox'")
     _ensure_column(cursor, "config", "mp_public_key_test", "TEXT DEFAULT ''")
     _ensure_column(cursor, "config", "mp_access_token_test", "TEXT DEFAULT ''")
@@ -454,15 +547,129 @@ def salvar_config(
     notification_email="",
     smtp_sender_email="",
     smtp_sender_password="",
-    mp_environment="sandbox",
-    mp_public_key_test="",
-    mp_access_token_test="",
-    mp_public_key_prod="",
-    mp_access_token_prod="",
+    confirmacao_manual_emissao=None,
+    mp_environment=None,
+    mp_public_key_test=None,
+    mp_access_token_test=None,
+    mp_public_key_prod=None,
+    mp_access_token_prod=None,
 ):
     conn = _connect()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM config")
+    cursor.execute(
+        """
+        SELECT
+            id,
+            caminho_base,
+            login,
+            senha,
+            COALESCE(recurrence_enabled, 0),
+            COALESCE(recurrence_frequency, 'manual'),
+            COALESCE(notification_email, ''),
+            COALESCE(smtp_sender_email, ''),
+            COALESCE(smtp_sender_password, ''),
+            COALESCE(confirmacao_manual_emissao, 1),
+            COALESCE(mp_environment, 'sandbox'),
+            COALESCE(mp_public_key_test, ''),
+            COALESCE(mp_access_token_test, ''),
+            COALESCE(mp_public_key_prod, ''),
+            COALESCE(mp_access_token_prod, '')
+        FROM config
+        ORDER BY id ASC
+        LIMIT 1
+        """
+    )
+    row = cursor.fetchone()
+
+    config_id = row[0] if row else None
+    atual = {
+        "caminho_base": row[1] if row else "",
+        "login": row[2] if row else "",
+        "senha": row[3] if row else "",
+        "recurrence_enabled": row[4] if row else 0,
+        "recurrence_frequency": row[5] if row else "manual",
+        "notification_email": row[6] if row else "",
+        "smtp_sender_email": row[7] if row else "",
+        "smtp_sender_password": row[8] if row else "",
+        "confirmacao_manual_emissao": row[9] if row else 1,
+        "mp_environment": row[10] if row else "sandbox",
+        "mp_public_key_test": row[11] if row else "",
+        "mp_access_token_test": row[12] if row else "",
+        "mp_public_key_prod": row[13] if row else "",
+        "mp_access_token_prod": row[14] if row else "",
+    }
+
+    caminho_base = str(caminho_base or atual["caminho_base"]).strip()
+    login = str(login or atual["login"]).strip()
+    senha = str(senha or atual["senha"]).strip()
+    notification_email = str(notification_email or atual["notification_email"]).strip()
+    smtp_sender_email = str(smtp_sender_email or atual["smtp_sender_email"]).strip()
+    smtp_sender_password = str(
+        smtp_sender_password or atual["smtp_sender_password"]
+    ).strip()
+    if confirmacao_manual_emissao is None:
+        confirmacao_manual_emissao = bool(atual["confirmacao_manual_emissao"])
+    mp_environment = str(mp_environment or atual["mp_environment"] or "sandbox").strip().lower()
+    mp_public_key_test = str(
+        mp_public_key_test if mp_public_key_test is not None else atual["mp_public_key_test"]
+    ).strip()
+    mp_access_token_test = str(
+        mp_access_token_test
+        if mp_access_token_test is not None
+        else atual["mp_access_token_test"]
+    ).strip()
+    mp_public_key_prod = str(
+        mp_public_key_prod if mp_public_key_prod is not None else atual["mp_public_key_prod"]
+    ).strip()
+    mp_access_token_prod = str(
+        mp_access_token_prod
+        if mp_access_token_prod is not None
+        else atual["mp_access_token_prod"]
+    ).strip()
+
+    if config_id is not None:
+        cursor.execute(
+            """
+            UPDATE config
+            SET
+                caminho_base = ?,
+                login = ?,
+                senha = ?,
+                recurrence_enabled = ?,
+                recurrence_frequency = ?,
+                notification_email = ?,
+                smtp_sender_email = ?,
+                smtp_sender_password = ?,
+                confirmacao_manual_emissao = ?,
+                mp_environment = ?,
+                mp_public_key_test = ?,
+                mp_access_token_test = ?,
+                mp_public_key_prod = ?,
+                mp_access_token_prod = ?
+            WHERE id = ?
+            """,
+            (
+                caminho_base,
+                login,
+                senha,
+                int(bool(recurrence_enabled)),
+                recurrence_frequency,
+                notification_email,
+                smtp_sender_email,
+                smtp_sender_password,
+                int(bool(confirmacao_manual_emissao)),
+                mp_environment,
+                mp_public_key_test,
+                mp_access_token_test,
+                mp_public_key_prod,
+                mp_access_token_prod,
+                config_id,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        return
+
     cursor.execute(
         """
         INSERT INTO config (
@@ -474,13 +681,14 @@ def salvar_config(
             notification_email,
             smtp_sender_email,
             smtp_sender_password,
+            confirmacao_manual_emissao,
             mp_environment,
             mp_public_key_test,
             mp_access_token_test,
             mp_public_key_prod,
             mp_access_token_prod
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             caminho_base,
@@ -491,11 +699,12 @@ def salvar_config(
             notification_email,
             smtp_sender_email,
             smtp_sender_password,
-            str(mp_environment or "sandbox").strip().lower() or "sandbox",
-            str(mp_public_key_test or "").strip(),
-            str(mp_access_token_test or "").strip(),
-            str(mp_public_key_prod or "").strip(),
-            str(mp_access_token_prod or "").strip(),
+            int(bool(confirmacao_manual_emissao if confirmacao_manual_emissao is not None else True)),
+            mp_environment or "sandbox",
+            mp_public_key_test,
+            mp_access_token_test,
+            mp_public_key_prod,
+            mp_access_token_prod,
         ),
     )
     conn.commit()
@@ -516,6 +725,7 @@ def carregar_config():
             COALESCE(notification_email, ''),
             COALESCE(smtp_sender_email, ''),
             COALESCE(smtp_sender_password, ''),
+            COALESCE(confirmacao_manual_emissao, 1),
             COALESCE(mp_environment, 'sandbox'),
             COALESCE(mp_public_key_test, ''),
             COALESCE(mp_access_token_test, ''),
@@ -538,11 +748,12 @@ def carregar_config():
             "notification_email": row[5] or "",
             "smtp_sender_email": row[6] or "",
             "smtp_sender_password": row[7] or "",
-            "mp_environment": row[8] or "sandbox",
-            "mp_public_key_test": row[9] or "",
-            "mp_access_token_test": row[10] or "",
-            "mp_public_key_prod": row[11] or "",
-            "mp_access_token_prod": row[12] or "",
+            "confirmacao_manual_emissao": bool(row[8]),
+            "mp_environment": row[9] or "sandbox",
+            "mp_public_key_test": row[10] or "",
+            "mp_access_token_test": row[11] or "",
+            "mp_public_key_prod": row[12] or "",
+            "mp_access_token_prod": row[13] or "",
         }
 
     return {
@@ -554,6 +765,7 @@ def carregar_config():
         "notification_email": "",
         "smtp_sender_email": "",
         "smtp_sender_password": "",
+        "confirmacao_manual_emissao": True,
         "mp_environment": "sandbox",
         "mp_public_key_test": "",
         "mp_access_token_test": "",
@@ -952,6 +1164,70 @@ def criar_cliente_portal(nome, email, password, telefone="", documento="", ender
         conn.close()
 
     return obter_cliente_portal(cliente_id)
+
+
+def iniciar_trial_portal(cliente_id, plano_code=""):
+    plano_code = str(plano_code or DEFAULT_TRIAL_PLAN_CODE).strip() or DEFAULT_TRIAL_PLAN_CODE
+    agora = datetime.now()
+    inicio = agora.isoformat(timespec="seconds")
+    vencimento = (agora + timedelta(days=TRIAL_DAYS)).isoformat(timespec="seconds")
+
+    conn = _connect()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT code FROM planos_cobranca WHERE code = ? AND ativo = 1 LIMIT 1",
+        (plano_code,),
+    )
+    if not cursor.fetchone():
+        plano_code = DEFAULT_TRIAL_PLAN_CODE
+
+    cursor.execute(
+        "SELECT code FROM planos_cobranca WHERE code = ? AND ativo = 1 LIMIT 1",
+        (plano_code,),
+    )
+    if not cursor.fetchone():
+        cursor.execute(
+            "SELECT code FROM planos_cobranca WHERE ativo = 1 ORDER BY valor_mensal DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+        plano_code = row[0] if row else "emissor"
+
+    cursor.execute(
+        """
+        SELECT id
+        FROM portal_assinaturas
+        WHERE cliente_id = ?
+          AND status IN ('trial', 'active', 'paid', 'checkout')
+        ORDER BY updated_at DESC, id DESC
+        LIMIT 1
+        """,
+        (int(cliente_id),),
+    )
+    existente = cursor.fetchone()
+    if existente:
+        conn.close()
+        return obter_assinatura_portal_ativa(cliente_id, incluir_checkout=True)
+
+    cursor.execute(
+        """
+        INSERT INTO portal_assinaturas (
+            cliente_id,
+            plano_code,
+            status,
+            ciclo,
+            started_at,
+            next_due_at,
+            created_at,
+            updated_at
+        )
+        VALUES (?, ?, 'trial', 'mensal', ?, ?, ?, ?)
+        """,
+        (int(cliente_id), plano_code, inicio, vencimento, inicio, inicio),
+    )
+    conn.commit()
+    conn.close()
+    return obter_assinatura_portal_ativa(cliente_id, incluir_checkout=True)
 
 
 def obter_cliente_portal(cliente_id):
@@ -1372,12 +1648,13 @@ def listar_assinaturas_portal_cliente(cliente_id):
             row["recursos"] = json.loads(row.get("recursos_json") or "[]")
         except Exception:
             row["recursos"] = []
+        _enriquecer_trial_assinatura(row)
     return rows
 
 
 def obter_assinatura_portal_ativa(cliente_id, incluir_checkout=False):
     assinaturas = listar_assinaturas_portal_cliente(cliente_id)
-    status_validos = {"active", "paid"}
+    status_validos = {"active", "paid", "trial"}
     if incluir_checkout:
         status_validos.add("checkout")
 
@@ -1385,6 +1662,197 @@ def obter_assinatura_portal_ativa(cliente_id, incluir_checkout=False):
         if str(assinatura.get("status") or "").lower() in status_validos:
             return assinatura
     return assinaturas[0] if assinaturas else None
+
+
+def validar_dispositivo_portal(cliente_id, email, machine_id):
+    email = _normalizar_email(email)
+    machine_id = str(machine_id or "").strip().lower()
+    if not machine_id:
+        return {
+            "ok": False,
+            "reason": "license_machine_required",
+            "dispositivo": None,
+        }
+
+    agora = datetime.now().isoformat(timespec="seconds")
+    conn = _connect()
+    conn.row_factory = _dict_factory
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, cliente_id, email, machine_id, status, first_seen_at, last_seen_at
+        FROM portal_dispositivos
+        WHERE email = ?
+          AND status = 'active'
+        ORDER BY id ASC
+        """,
+        (email,),
+    )
+    dispositivos = cursor.fetchall()
+
+    for dispositivo in dispositivos:
+        if str(dispositivo.get("machine_id") or "").lower() == machine_id:
+            cursor.execute(
+                "UPDATE portal_dispositivos SET last_seen_at = ? WHERE id = ?",
+                (agora, dispositivo["id"]),
+            )
+            conn.commit()
+            conn.close()
+            dispositivo["last_seen_at"] = agora
+            return {
+                "ok": True,
+                "reason": "license_device_authorized",
+                "dispositivo": dispositivo,
+            }
+
+    if dispositivos:
+        conn.close()
+        return {
+            "ok": False,
+            "reason": "license_device_not_authorized",
+            "dispositivo": dispositivos[0],
+        }
+
+    cursor.execute(
+        """
+        INSERT INTO portal_dispositivos (
+            cliente_id,
+            email,
+            machine_id,
+            status,
+            first_seen_at,
+            last_seen_at,
+            observacoes
+        )
+        VALUES (?, ?, ?, 'active', ?, ?, ?)
+        """,
+        (
+            int(cliente_id),
+            email,
+            machine_id,
+            agora,
+            agora,
+            "Dispositivo vinculado automaticamente no primeiro acesso validado.",
+        ),
+    )
+    dispositivo_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return {
+        "ok": True,
+        "reason": "license_device_bound",
+        "dispositivo": {
+            "id": dispositivo_id,
+            "cliente_id": int(cliente_id),
+            "email": email,
+            "machine_id": machine_id,
+            "status": "active",
+            "first_seen_at": agora,
+            "last_seen_at": agora,
+        },
+    }
+
+
+def avaliar_licenca_portal(email, machine_id=""):
+    email = _normalizar_email(email)
+    if not email:
+        return {
+            "ok": False,
+            "reason": "license_email_required",
+            "cliente": None,
+            "assinatura": None,
+        }
+
+    if usuario_dono_sistema(email):
+        return {
+            "ok": True,
+            "reason": "owner_bypass",
+            "cliente": {"email": email, "nome": "Gestor MBS"},
+            "assinatura": obter_assinatura_sistema(),
+            "dispositivo": None,
+        }
+
+    cliente = obter_cliente_portal_por_email(email)
+    if not cliente:
+        assinatura_sistema = obter_assinatura_sistema()
+        contato = _normalizar_email((assinatura_sistema or {}).get("billing_contact_email"))
+        if contato and contato == email:
+            status_sistema = avaliar_status_cobranca()
+            return {
+                "ok": bool(status_sistema.get("ok")),
+                "reason": status_sistema.get("reason", "billing_unknown"),
+                "cliente": {
+                    "email": email,
+                    "nome": (assinatura_sistema or {}).get("billing_contact_name") or email,
+                },
+                "assinatura": status_sistema.get("assinatura"),
+                "dispositivo": None,
+            }
+        return {
+            "ok": False,
+            "reason": "license_email_not_found",
+            "cliente": None,
+            "assinatura": None,
+            "dispositivo": None,
+        }
+
+    if not cliente.get("ativo"):
+        return {
+            "ok": False,
+            "reason": "license_client_inactive",
+            "cliente": cliente,
+            "assinatura": None,
+            "dispositivo": None,
+        }
+
+    assinatura = obter_assinatura_portal_ativa(cliente["id"], incluir_checkout=False)
+    if not assinatura:
+        return {
+            "ok": False,
+            "reason": "license_subscription_not_found",
+            "cliente": cliente,
+            "assinatura": None,
+            "dispositivo": None,
+        }
+
+    status = str(assinatura.get("status") or "").strip().lower()
+    if status not in REMOTE_BILLING_ACTIVE_STATUSES:
+        return {
+            "ok": False,
+            "reason": "license_subscription_inactive",
+            "cliente": cliente,
+            "assinatura": assinatura,
+            "dispositivo": None,
+        }
+
+    next_due_at = _parse_iso_datetime(assinatura.get("next_due_at"))
+    if next_due_at and next_due_at < datetime.now():
+        return {
+            "ok": False,
+            "reason": "license_subscription_overdue",
+            "cliente": cliente,
+            "assinatura": assinatura,
+            "dispositivo": None,
+        }
+
+    dispositivo = validar_dispositivo_portal(cliente["id"], email, machine_id)
+    if not dispositivo.get("ok"):
+        return {
+            "ok": False,
+            "reason": dispositivo.get("reason", "license_device_not_authorized"),
+            "cliente": cliente,
+            "assinatura": assinatura,
+            "dispositivo": dispositivo.get("dispositivo"),
+        }
+
+    return {
+        "ok": True,
+        "reason": "license_trial_active" if status == "trial" else "license_active",
+        "cliente": cliente,
+        "assinatura": assinatura,
+        "dispositivo": dispositivo.get("dispositivo"),
+    }
 
 
 def listar_cobrancas_portal_cliente(cliente_id, limit=24):
@@ -1406,6 +1874,8 @@ def listar_cobrancas_portal_cliente(cliente_id, limit=24):
     )
     rows = cursor.fetchall()
     conn.close()
+    for row in rows:
+        _enriquecer_trial_assinatura(row)
     return rows
 
 
@@ -1455,7 +1925,7 @@ def obter_metricas_portal():
             total_atrasadas += 1
             continue
 
-        if status in {"active", "paid", "checkout"}:
+        if status in {"active", "paid", "trial", "checkout"}:
             total_ativas += 1
 
     return {
@@ -1516,11 +1986,118 @@ def avaliar_status_cobranca():
     }
 
 
+def validar_status_cobranca_online(email="", machine_id=None):
+    url = str(os.environ.get("MBS_BILLING_STATUS_URL", DEFAULT_BILLING_STATUS_URL) or "").strip()
+    if not url or url.lower() in {"off", "false", "disabled"}:
+        return {
+            "ok": False,
+            "reason": "billing_online_disabled",
+            "assinatura": None,
+        }
+
+    email = _normalizar_email(email)
+    if email:
+        machine_id = machine_id or obter_identificador_maquina()
+        separador = "&" if "?" in url else "?"
+        url = f"{url}{separador}{urlencode({'email': email, 'machine_id': machine_id})}"
+
+    try:
+        request = urllib.request.Request(
+            url,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "MBS-Fiscal-Desktop/1.0",
+            },
+        )
+        with urllib.request.urlopen(request, timeout=10) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except Exception as exc:
+        return {
+            "ok": False,
+            "reason": "billing_validation_failed",
+            "assinatura": None,
+            "error": str(exc),
+        }
+
+    assinatura = payload.get("assinatura") or {}
+    status = str(assinatura.get("status") or "").strip().lower()
+    if payload.get("ok") and (
+        status in REMOTE_BILLING_ACTIVE_STATUSES
+        or str(payload.get("reason") or "").startswith("license_")
+    ):
+        return {
+            "ok": True,
+            "reason": payload.get("reason") or "billing_online_active",
+            "assinatura": assinatura,
+            "cliente": payload.get("cliente"),
+            "dispositivo": payload.get("dispositivo"),
+        }
+
+    return {
+        "ok": False,
+        "reason": payload.get("reason") or "billing_online_inactive",
+        "assinatura": assinatura,
+        "cliente": payload.get("cliente"),
+        "dispositivo": payload.get("dispositivo"),
+    }
+
+
+def _normalizar_role_acesso(role):
+    role = str(role or "operador").strip().lower()
+    if role in GESTOR_ROLES:
+        return "admin"
+    return "operador"
+
+
+def usuario_e_gestor(usuario):
+    return str((usuario or {}).get("role") or "").strip().lower() in GESTOR_ROLES
+
+
+def contar_operadores_aprovados(excluir_user_id=None):
+    conn = _connect()
+    cursor = conn.cursor()
+    params = []
+    query = """
+        SELECT COUNT(*)
+        FROM usuarios
+        WHERE ativo = 1
+          AND approval_status = 'approved'
+          AND role = 'operador'
+    """
+    if excluir_user_id:
+        query += " AND id <> ?"
+        params.append(int(excluir_user_id))
+    cursor.execute(query, params)
+    total = cursor.fetchone()[0]
+    conn.close()
+    return int(total or 0)
+
+
+def obter_gestor_local():
+    conn = _connect()
+    conn.row_factory = _dict_factory
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, nome, username, role, last_login_at
+        FROM usuarios
+        WHERE ativo = 1
+          AND approval_status = 'approved'
+          AND role IN ('admin', 'gestor')
+        ORDER BY CASE WHEN role = 'admin' THEN 0 ELSE 1 END, id ASC
+        LIMIT 1
+        """
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+
 def criar_usuario(nome, username, password, role="operador"):
     nome = (nome or "").strip()
     username = _normalizar_email(username)
     password = password or ""
-    role = (role or "operador").strip().lower()
+    role = _normalizar_role_acesso(role)
 
     if not nome or not username or not password:
         raise ValueError("Nome, usuario e senha sao obrigatorios.")
@@ -1537,8 +2114,10 @@ def criar_usuario(nome, username, password, role="operador"):
     approval_status = "approved" if primeiro_usuario else "pending"
     aprovado_em = agora if primeiro_usuario else None
 
-    if primeiro_usuario and role != "admin":
+    if primeiro_usuario:
         role = "admin"
+    else:
+        role = "operador"
 
     conn = _connect()
     cursor = conn.cursor()
@@ -1586,8 +2165,17 @@ def criar_usuario(nome, username, password, role="operador"):
 def autenticar_usuario(username, password):
     username = _normalizar_email(username)
     password = password or ""
+    owner_billing_bypass = usuario_dono_sistema(username)
 
-    billing_status = avaliar_status_cobranca()
+    if owner_billing_bypass:
+        billing_status = {
+            "ok": True,
+            "reason": "owner_bypass",
+            "assinatura": obter_assinatura_sistema(),
+        }
+    else:
+        billing_status = avaliar_status_cobranca()
+
     if not billing_status.get("ok"):
         return {
             "ok": False,
@@ -1696,17 +2284,36 @@ def listar_usuarios_pendentes():
 
 
 def aprovar_usuario(user_id, admin_user):
-    if not admin_user or admin_user.get("role") != "admin":
-        raise ValueError("Apenas admins podem aprovar acessos.")
+    if not usuario_e_gestor(admin_user):
+        raise ValueError("Apenas o gestor local pode aprovar acessos.")
 
     agora = datetime.now().isoformat(timespec="seconds")
     conn = _connect()
     cursor = conn.cursor()
     cursor.execute(
         """
+        SELECT id, role, approval_status
+        FROM usuarios
+        WHERE id = ?
+        LIMIT 1
+        """,
+        (int(user_id),),
+    )
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise ValueError("Usuário não encontrado.")
+
+    if contar_operadores_aprovados(excluir_user_id=user_id) >= MAX_OPERADORES_DELEGADOS:
+        conn.close()
+        raise ValueError("Limite de 3 usuários comuns aprovados atingido.")
+
+    cursor.execute(
+        """
         UPDATE usuarios
         SET
             ativo = 1,
+            role = 'operador',
             approval_status = 'approved',
             approved_by = ?,
             approved_at = ?

@@ -1,5 +1,6 @@
 import os
 import time
+import unicodedata
 
 import pandas as pd
 
@@ -46,6 +47,12 @@ class EnvioService:
 
         self.whatsapp_sender = WhatsAppSender(log_callback=self.log)
 
+    def _normalizar_coluna(self, coluna):
+        texto = str(coluna or "").strip().upper()
+        texto = unicodedata.normalize("NFKD", texto)
+        texto = "".join(ch for ch in texto if not unicodedata.combining(ch))
+        return " ".join(texto.split())
+
     def _carregar_df(self):
         if not os.path.exists(self.caminho_planilha):
             raise Exception(f"Planilha nao encontrada: {self.caminho_planilha}")
@@ -72,12 +79,11 @@ class EnvioService:
         finally:
             xls.close()
 
-        df.columns = [col.strip().upper() for col in df.columns]
+        df.columns = [self._normalizar_coluna(col) for col in df.columns]
+        df = df.fillna("")
 
         for col in df.columns:
             df[col] = df[col].astype(str).str.strip()
-
-        df = df.fillna("")
 
         self.log("Colunas carregadas:")
         self.log(list(df.columns))

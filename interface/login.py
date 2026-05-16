@@ -1,10 +1,23 @@
+import webbrowser
+
 import customtkinter as ctk
 
-from database.db import autenticar_usuario, contar_usuarios, criar_usuario
+from database.db import (
+    autenticar_usuario,
+    contar_usuarios,
+    criar_usuario,
+    obter_gestor_local,
+    usuario_dono_sistema,
+    usuario_e_gestor,
+    validar_status_cobranca_online,
+)
 
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
+
+PORTAL_PAGAMENTO_URL = "https://mbsduodigital.com/"
+RECURSOS_COMPLETOS = ["emissao_nfse", "envio_email", "envio_whatsapp"]
 
 
 class LoginWindow(ctk.CTk):
@@ -12,8 +25,8 @@ class LoginWindow(ctk.CTk):
         super().__init__()
 
         self.title("Acesso do operador")
-        self.geometry("880x620")
-        self.minsize(820, 560)
+        self.geometry("880x660")
+        self.minsize(820, 620)
         self.configure(fg_color="#09111f")
 
         self.usuario_autenticado = None
@@ -21,11 +34,9 @@ class LoginWindow(ctk.CTk):
         self._criar_layout()
         if contar_usuarios() == 0:
             self.tabview.set("Solicitar acesso")
-            self.label_feedback.configure(
-                text=(
-                    "Nenhum usuario encontrado. O primeiro cadastro sera promovido "
-                    "a admin e liberado imediatamente."
-                )
+            self._mostrar_feedback(
+                "Nenhum usuário encontrado. O primeiro cadastro será o gestor local "
+                "e precisa usar o email pago no portal."
             )
 
     def _criar_layout(self):
@@ -66,19 +77,31 @@ class LoginWindow(ctk.CTk):
         ctk.CTkLabel(
             hero,
             text=(
-                "Novos usuarios nao entram direto no sistema. Depois do primeiro "
-                "admin, cada cadastro fica pendente ate aprovacao."
+                "O gestor local usa o email que está pago no portal. Depois disso, "
+                "ele pode aprovar até 3 usuários comuns neste computador."
             ),
             font=("Segoe UI", 15),
             text_color="#b8c4da",
             justify="left",
             wraplength=420,
-        ).pack(anchor="w", padx=28, pady=(0, 28))
+        ).pack(anchor="w", padx=28, pady=(0, 12))
+
+        ctk.CTkLabel(
+            hero,
+            text=(
+                "Teste grátis por 3 dias. Depois da contagem, o acesso só continua "
+                "com mensalidade ativa no portal."
+            ),
+            font=("Segoe UI Semibold", 15, "bold"),
+            text_color="#ffcf70",
+            justify="left",
+            wraplength=420,
+        ).pack(anchor="w", padx=28, pady=(0, 22))
 
         for title, body in [
-            ("Acesso controlado", "O primeiro usuario vira admin. Os demais aguardam aprovacao."),
-            ("Rastreabilidade", "Cada emissao continua vinculada ao operador autenticado."),
-            ("Governanca", "Aprovacao acontece dentro do painel por um usuario admin."),
+            ("Gestor vinculado", "O primeiro usuário vira gestor e passa pela validação online do portal."),
+            ("Delegação limitada", "Usuários comuns aguardam aprovação e não podem virar gestores."),
+            ("Pagamento obrigatório", "Sem assinatura ativa no site, o acesso ao desktop é bloqueado."),
         ]:
             card = ctk.CTkFrame(
                 hero,
@@ -152,10 +175,35 @@ class LoginWindow(ctk.CTk):
             text="",
             font=("Segoe UI", 12),
             text_color="#ffcf70",
-            wraplength=280,
+            wraplength=300,
             justify="left",
         )
-        self.label_feedback.grid(row=3, column=0, sticky="w", padx=22, pady=(0, 18))
+        self.label_feedback.grid(row=3, column=0, sticky="w", padx=22, pady=(0, 10))
+
+        self.link_pagamento = ctk.CTkButton(
+            painel,
+            text="Abrir portal de pagamento",
+            height=34,
+            fg_color="transparent",
+            hover_color="#16233d",
+            text_color="#6ea8ff",
+            border_width=1,
+            border_color="#2c6bed",
+            corner_radius=14,
+            command=self._abrir_portal_pagamento,
+        )
+        self.link_pagamento.grid(row=4, column=0, sticky="w", padx=22, pady=(0, 18))
+        self.link_pagamento.grid_remove()
+
+    def _abrir_portal_pagamento(self):
+        webbrowser.open(PORTAL_PAGAMENTO_URL)
+
+    def _mostrar_feedback(self, texto, mostrar_link=False):
+        self.label_feedback.configure(text=texto)
+        if mostrar_link:
+            self.link_pagamento.grid()
+        else:
+            self.link_pagamento.grid_remove()
 
     def _criar_tab_login(self, parent):
         parent.grid_columnconfigure(0, weight=1)
@@ -179,27 +227,48 @@ class LoginWindow(ctk.CTk):
         self.register_name = self._entry(parent, "Nome completo")
         self.register_username = self._entry(parent, "Email de acesso")
         self.register_password = self._entry(parent, "Senha", show="*")
+        self.register_password_confirm = self._entry(parent, "Confirmar senha", show="*")
+
+        self.register_show_password = ctk.BooleanVar(value=False)
+        ctk.CTkCheckBox(
+            parent,
+            text="Mostrar senha",
+            variable=self.register_show_password,
+            onvalue=True,
+            offvalue=False,
+            text_color="#9cadc8",
+            fg_color="#2c6bed",
+            hover_color="#1f57c7",
+            border_color="#6c7c96",
+            command=self._alternar_senha_cadastro,
+        ).pack(anchor="w", pady=(10, 0))
 
         self.role_combo = ctk.CTkComboBox(
             parent,
-            values=["operador", "gestor"],
+            values=["operador"],
             height=44,
             border_color="#304564",
             fg_color="#121b2d",
             button_color="#203a63",
+            state="readonly",
         )
         self.role_combo.pack(fill="x", pady=(10, 0))
         self.role_combo.set("operador")
 
         ctk.CTkButton(
             parent,
-            text="Solicitar usuario",
+            text="Solicitar usuário comum",
             height=46,
             font=("Segoe UI Semibold", 14, "bold"),
             fg_color="#2c6bed",
             hover_color="#1f57c7",
             command=self._registrar,
         ).pack(fill="x", pady=(18, 8))
+
+    def _alternar_senha_cadastro(self):
+        show = "" if self.register_show_password.get() else "*"
+        self.register_password.configure(show=show)
+        self.register_password_confirm.configure(show=show)
 
     def _entry(self, parent, placeholder, show=None):
         entry = ctk.CTkEntry(
@@ -214,6 +283,19 @@ class LoginWindow(ctk.CTk):
         entry.pack(fill="x", pady=(10, 0))
         return entry
 
+    def _anexar_licenca_usuario(self, usuario, licenca, email_licenca):
+        assinatura = (licenca or {}).get("assinatura") or {}
+        recursos = assinatura.get("recursos") or []
+        if not recursos and (licenca or {}).get("reason") == "owner_bypass":
+            recursos = RECURSOS_COMPLETOS
+
+        usuario["email_licenca"] = email_licenca
+        usuario["licenca"] = licenca or {}
+        usuario["plano_code"] = assinatura.get("plano_code") or ""
+        usuario["plano_nome"] = assinatura.get("plano_nome") or assinatura.get("nome") or ""
+        usuario["recursos"] = list(recursos)
+        return usuario
+
     def _login(self):
         username = self.login_username.get().strip()
         password = self.login_password.get()
@@ -222,40 +304,85 @@ class LoginWindow(ctk.CTk):
         if not resultado.get("ok"):
             reason = resultado.get("reason")
             mensagens = {
-                "invalid_credentials": "Usuario ou senha invalidos.",
-                "pending_approval": "Seu acesso ainda aguarda aprovacao do admin.",
-                "inactive_user": "Seu usuario esta inativo. Fale com o admin.",
-                "billing_overdue": "Mensalidade vencida. Regularize a assinatura para liberar o acesso.",
-                "billing_blocked": "Assinatura bloqueada. Fale com o administrador financeiro.",
+                "invalid_credentials": "Usuário ou senha inválidos.",
+                "pending_approval": "Seu acesso ainda aguarda aprovação do gestor.",
+                "inactive_user": "Seu usuário está inativo. Fale com o gestor.",
+                "billing_overdue": "Mensalidade vencida. Clique no link abaixo para atualizar o pagamento e liberar o acesso.",
+                "billing_blocked": "Assinatura bloqueada. Clique no link abaixo para regularizar o pagamento.",
             }
-            self.label_feedback.configure(
-                text=mensagens.get(reason, "Nao foi possivel entrar com esse email.")
+            self._mostrar_feedback(
+                mensagens.get(reason, "Não foi possível entrar com esse email."),
+                mostrar_link=reason in {"billing_overdue", "billing_blocked"},
             )
             return
 
-        self.usuario_autenticado = resultado["usuario"]
+        usuario = resultado["usuario"]
+        gestor = obter_gestor_local()
+        email_licenca = username if usuario_e_gestor(usuario) else (gestor or {}).get("username", "")
+
+        if usuario_dono_sistema(email_licenca):
+            licenca = {
+                "ok": True,
+                "reason": "owner_bypass",
+                "assinatura": {
+                    "plano_code": "owner",
+                    "plano_nome": "Gestor MBS",
+                    "recursos": RECURSOS_COMPLETOS,
+                },
+            }
+        else:
+            licenca = validar_status_cobranca_online(email_licenca)
+            if not licenca.get("ok"):
+                mensagens = {
+                    "billing_overdue": "Mensalidade vencida. Clique no link abaixo para atualizar o pagamento e liberar o acesso.",
+                    "billing_blocked": "Assinatura bloqueada. Clique no link abaixo para regularizar o pagamento.",
+                    "billing_grace_period": "Assinatura em carência. Clique no link abaixo para conferir a mensalidade.",
+                    "billing_not_configured": "Assinatura não encontrada. Clique no link abaixo para contratar ou atualizar o pagamento.",
+                    "billing_online_disabled": "Validação online da assinatura está desativada.",
+                    "billing_validation_failed": "Não foi possível validar a assinatura online. Verifique a internet e tente novamente.",
+                    "billing_online_inactive": "Assinatura sem pagamento ativo. Clique no link abaixo para atualizar o pagamento.",
+                    "billing_unknown": "Assinatura sem status pago. Clique no link abaixo para regularizar.",
+                    "license_email_not_found": "Este email não está cadastrado no portal. Clique no link abaixo para contratar ou regularizar.",
+                    "license_client_inactive": "Este cliente está inativo no portal. Clique no link abaixo para regularizar.",
+                    "license_subscription_not_found": "Este email não possui assinatura ativa no portal.",
+                    "license_subscription_inactive": "A assinatura deste email não está ativa no portal.",
+                    "license_subscription_overdue": "A assinatura deste email está vencida. Clique no link abaixo para atualizar o pagamento.",
+                    "license_machine_required": "Não foi possível identificar este computador para validar a licença.",
+                    "license_device_not_authorized": "Esta licença já está vinculada a outro computador. Regularize o acesso no portal.",
+                }
+                reason = licenca.get("reason")
+                self._mostrar_feedback(
+                    mensagens.get(reason, "Clique no link abaixo para atualizar o pagamento."),
+                    mostrar_link=reason != "billing_validation_failed",
+                )
+                return
+
+        usuario = self._anexar_licenca_usuario(usuario, licenca, email_licenca)
+        self.usuario_autenticado = usuario
         self.destroy()
 
     def _registrar(self):
+        senha = self.register_password.get()
+        confirmar_senha = self.register_password_confirm.get()
+        if senha != confirmar_senha:
+            self._mostrar_feedback("As senhas digitadas não conferem.")
+            return
+
         try:
             resultado = criar_usuario(
                 nome=self.register_name.get().strip(),
                 username=self.register_username.get().strip(),
-                password=self.register_password.get(),
+                password=senha,
                 role=self.role_combo.get().strip().lower(),
             )
         except Exception as exc:
-            self.label_feedback.configure(text=str(exc))
+            self._mostrar_feedback(str(exc))
             return
 
         if resultado["primeiro_usuario"]:
-            self.label_feedback.configure(
-                text="Primeiro usuario criado como admin. Faça login para continuar."
-            )
+            self._mostrar_feedback("Gestor local criado. Faça login para validar a assinatura no portal.")
         else:
-            self.label_feedback.configure(
-                text="Solicitacao criada. Aguarde a aprovacao de um admin."
-            )
+            self._mostrar_feedback("Solicitação criada. Aguarde a aprovação do gestor local.")
 
         self.tabview.set("Entrar")
         self.login_username.delete(0, "end")

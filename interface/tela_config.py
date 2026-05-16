@@ -3,7 +3,7 @@ from tkinter import filedialog
 
 import customtkinter as ctk
 
-from database.db import carregar_config, salvar_config
+from database.db import carregar_config, salvar_config, usuario_e_gestor
 
 
 ctk.set_appearance_mode("dark")
@@ -15,14 +15,17 @@ class TelaConfig(ctk.CTk):
         super().__init__()
 
         self.usuario = usuario or {}
-        self.is_admin = self.usuario.get("role") == "admin"
-        self.title("Configuracao inicial")
+        self.is_admin = usuario_e_gestor(self.usuario)
+        self.title("Configuração inicial")
         self.geometry("760x620")
         self.minsize(720, 580)
 
         self.config_atual = carregar_config()
         self.recorrencia_var = ctk.BooleanVar(
             value=self.config_atual.get("recurrence_enabled", False)
+        )
+        self.confirmacao_manual_var = ctk.BooleanVar(
+            value=self.config_atual.get("confirmacao_manual_emissao", True)
         )
 
         self._criar_layout()
@@ -60,7 +63,7 @@ class TelaConfig(ctk.CTk):
             hero,
             text=(
                 "Configure a base de arquivos, credenciais e a rotina padrao "
-                "para deixar o produto pronto para operacao recorrente."
+                "para deixar o produto pronto para operação recorrente."
             ),
             font=("Segoe UI", 14),
             text_color="#b7c2d9",
@@ -81,8 +84,10 @@ class TelaConfig(ctk.CTk):
             self._criar_input_email_envio(form)
             self._criar_input_senha_email_envio(form)
             self._criar_bloco_recorrencia(form, row=3, column=1)
+            self._criar_bloco_confirmacao_emissao(form, row=4, column=0, colspan=2)
         else:
             self._criar_bloco_recorrencia(form, row=2, column=1)
+            self._criar_bloco_confirmacao_emissao(form, row=3, column=0, colspan=2)
         self._criar_acoes(container)
 
     def _criar_input_arquivo(self, parent):
@@ -114,8 +119,9 @@ class TelaConfig(ctk.CTk):
 
     def _criar_input_login(self, parent):
         bloco = self._bloco(parent, 1, 0)
-        self._label(bloco, "Login Nota Fiscal")
+        self._label(bloco, "CNPJ / Login Nota Fiscal")
         self.entry_login = self._entry(bloco)
+        self.entry_login.bind("<KeyRelease>", self._aplicar_mascara_cnpj)
 
     def _criar_input_senha(self, parent):
         bloco = self._bloco(parent, 1, 1)
@@ -152,7 +158,7 @@ class TelaConfig(ctk.CTk):
 
     def _criar_bloco_recorrencia(self, parent, row, column):
         bloco = self._bloco(parent, row, column)
-        self._label(bloco, "Recorrencia padrao")
+        self._label(bloco, "Recorrência padrão")
 
         self.switch_recorrencia = ctk.CTkSwitch(
             bloco,
@@ -179,6 +185,33 @@ class TelaConfig(ctk.CTk):
         )
         self.combo_recorrencia.pack(fill="x")
 
+    def _criar_bloco_confirmacao_emissao(self, parent, row, column, colspan=1):
+        bloco = self._bloco(parent, row, column, colspan=colspan)
+        self._label(bloco, "Confirmação antes de emitir")
+
+        self.switch_confirmacao_manual = ctk.CTkSwitch(
+            bloco,
+            text="Pausar para o operador revisar e confirmar a emissão",
+            variable=self.confirmacao_manual_var,
+            onvalue=True,
+            offvalue=False,
+            progress_color="#2c6bed",
+            text_color="#b7c2d9",
+        )
+        self.switch_confirmacao_manual.pack(anchor="w", padx=18, pady=(12, 6))
+
+        ctk.CTkLabel(
+            bloco,
+            text=(
+                "Ligado por padrão. Desligue apenas quando a base já estiver "
+                "corrigida e a emissão puder seguir automaticamente."
+            ),
+            font=("Segoe UI", 12),
+            text_color="#8ea3c7",
+            justify="left",
+            wraplength=920,
+        ).pack(anchor="w", padx=18, pady=(0, 18))
+
     def _criar_acoes(self, parent):
         rodape = ctk.CTkFrame(parent, fg_color="transparent")
         rodape.grid(row=2, column=0, sticky="ew", padx=24, pady=(0, 24))
@@ -194,7 +227,7 @@ class TelaConfig(ctk.CTk):
 
         ctk.CTkButton(
             rodape,
-            text="Salvar configuracao",
+            text="Salvar configuração",
             width=190,
             height=46,
             font=("Segoe UI Semibold", 15, "bold"),
@@ -248,6 +281,39 @@ class TelaConfig(ctk.CTk):
             show="" if self.smtp_password_visivel.get() else "*"
         )
 
+    def _somente_digitos(self, valor):
+        return "".join(ch for ch in str(valor or "") if ch.isdigit())
+
+    def _formatar_cnpj(self, valor):
+        digitos = self._somente_digitos(valor)[:14]
+        partes = []
+
+        if len(digitos) <= 2:
+            return digitos
+
+        partes.append(digitos[:2])
+        if len(digitos) <= 5:
+            return f"{partes[0]}.{digitos[2:]}"
+
+        partes.append(digitos[2:5])
+        if len(digitos) <= 8:
+            return f"{partes[0]}.{partes[1]}.{digitos[5:]}"
+
+        partes.append(digitos[5:8])
+        if len(digitos) <= 12:
+            return f"{partes[0]}.{partes[1]}.{partes[2]}/{digitos[8:]}"
+
+        return f"{partes[0]}.{partes[1]}.{partes[2]}/{digitos[8:12]}-{digitos[12:]}"
+
+    def _aplicar_mascara_cnpj(self, _event=None):
+        if not hasattr(self, "entry_login"):
+            return
+
+        valor_formatado = self._formatar_cnpj(self.entry_login.get())
+        self.entry_login.delete(0, "end")
+        self.entry_login.insert(0, valor_formatado)
+        self.entry_login.icursor("end")
+
     def _carregar_credenciais_email_legacy(self):
         try:
             with open("teste_envio.py", "r", encoding="utf-8") as arquivo:
@@ -276,7 +342,7 @@ class TelaConfig(ctk.CTk):
 
     def _preencher_campos(self):
         self.entry_caminho.insert(0, self.config_atual.get("caminho_base", ""))
-        self.entry_login.insert(0, self.config_atual.get("login", ""))
+        self.entry_login.insert(0, self._formatar_cnpj(self.config_atual.get("login", "")))
         self.entry_senha.insert(0, self.config_atual.get("senha", ""))
         self.entry_email.insert(0, self.config_atual.get("notification_email", ""))
         if self.is_admin:
@@ -303,7 +369,7 @@ class TelaConfig(ctk.CTk):
 
     def salvar(self):
         caminho = self.entry_caminho.get().strip()
-        login = self.entry_login.get().strip()
+        login = self._somente_digitos(self.entry_login.get())
         senha = self.entry_senha.get().strip()
         email = self.entry_email.get().strip()
         smtp_sender_email = (
@@ -333,7 +399,8 @@ class TelaConfig(ctk.CTk):
             notification_email=email,
             smtp_sender_email=smtp_sender_email,
             smtp_sender_password=smtp_sender_password,
+            confirmacao_manual_emissao=self.confirmacao_manual_var.get(),
         )
 
-        self.label_feedback.configure(text="Configuracao salva com sucesso.")
-        self.after(500, self.destroy)
+        self.label_feedback.configure(text="Configuração salva com sucesso.")
+        self.config_atual = carregar_config()

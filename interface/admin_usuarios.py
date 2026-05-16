@@ -1,6 +1,11 @@
 import customtkinter as ctk
 
-from database.db import aprovar_usuario, listar_usuarios_pendentes
+from database.db import (
+    MAX_OPERADORES_DELEGADOS,
+    aprovar_usuario,
+    contar_operadores_aprovados,
+    listar_usuarios_pendentes,
+)
 
 
 class AdminUsuariosWindow(ctk.CTkToplevel):
@@ -8,7 +13,7 @@ class AdminUsuariosWindow(ctk.CTkToplevel):
         super().__init__(parent)
 
         self.admin_user = admin_user
-        self.title("Aprovacao de usuarios")
+        self.title("Aprovação de usuários")
         self.geometry("760x560")
         self.configure(fg_color="#09111f")
 
@@ -30,14 +35,14 @@ class AdminUsuariosWindow(ctk.CTkToplevel):
 
         ctk.CTkLabel(
             topo,
-            text="Solicitacoes de acesso",
+            text="Solicitações de acesso",
             font=("Segoe UI Semibold", 24, "bold"),
             text_color="#f5f7fb",
         ).pack(anchor="w", padx=20, pady=(18, 6))
 
         ctk.CTkLabel(
             topo,
-            text="Apenas admins podem aprovar novos usuarios e liberar login.",
+            text="O gestor local pode aprovar até 3 usuários comuns. Eles não podem virar gestores.",
             font=("Segoe UI", 13),
             text_color="#9cadc8",
         ).pack(anchor="w", padx=20, pady=(0, 18))
@@ -63,11 +68,16 @@ class AdminUsuariosWindow(ctk.CTkToplevel):
         for child in self.lista.winfo_children():
             child.destroy()
 
+        aprovados = contar_operadores_aprovados()
+        self.label_feedback.configure(
+            text=f"Usuários comuns aprovados: {aprovados}/{MAX_OPERADORES_DELEGADOS}"
+        )
+
         pendentes = listar_usuarios_pendentes()
         if not pendentes:
             ctk.CTkLabel(
                 self.lista,
-                text="Nao ha usuarios pendentes de aprovacao.",
+                text="Não há usuários pendentes de aprovação.",
                 font=("Segoe UI", 14),
                 text_color="#9cadc8",
             ).pack(anchor="w", padx=16, pady=16)
@@ -92,7 +102,7 @@ class AdminUsuariosWindow(ctk.CTkToplevel):
 
             ctk.CTkLabel(
                 card,
-                text=f"Perfil solicitado: {usuario['role']} | Criado em: {usuario['created_at']}",
+                text=f"Perfil liberado: operador | Criado em: {usuario['created_at']}",
                 font=("Segoe UI", 12),
                 text_color="#9cadc8",
             ).pack(anchor="w", padx=16, pady=(0, 12))
