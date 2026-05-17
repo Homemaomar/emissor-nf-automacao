@@ -429,6 +429,7 @@ def _pix_code(checkout):
 def _render_home(request: Request, mensagem="", erro=""):
     cliente = _cliente_logado(request)
     admin = _admin_logado(request)
+    mostrar_trial = not admin
     planos = listar_planos_cobranca(apenas_ativos=True)
     plan_cards = []
     for idx, plano in enumerate(planos):
@@ -447,7 +448,7 @@ def _render_home(request: Request, mensagem="", erro=""):
               <div class="plan-price">{escape(_fmt_money(plano.get('valor_mensal', 0)))}</div>
               <div class="small"><strong>{escape(conteudo_plano.get('headline', 'Plano pronto para operacao fiscal.'))}</strong></div>
               <div class="small">{escape(conteudo_plano.get('pitch', 'Ciclo mensal com liberação dos recursos do sistema conforme o plano contratado.'))}</div>
-              <div class="small"><strong>Inclui 3 dias de teste grátis.</strong> Depois desse período, o sistema só continua liberado com a mensalidade paga.</div>
+              {('<div class="small"><strong>Inclui 3 dias de teste grátis.</strong> Depois desse período, o sistema só continua liberado com a mensalidade paga.</div>' if mostrar_trial else '')}
               <div class="small">O que o cliente ganha:</div>
               <ul>{ganhos or recursos}</ul>
               <a class="button btn-primary" href="/contratar?plan={escape(plano.get('code', ''))}">Escolher plano</a>
@@ -459,12 +460,12 @@ def _render_home(request: Request, mensagem="", erro=""):
     <section class="hero">
       <div>
         <div class="eyebrow">Portal Comercial</div>
-        <h1>Teste o MBS Fiscal por 3 dias e ative sua mensalidade quando estiver pronto</h1>
-        <p>Crie sua conta, baixe o sistema e use o plano escolhido por 3 dias grátis. Ao final do teste, o acesso fica bloqueado automaticamente caso a mensalidade ainda não esteja paga.</p>
+        <h1>{'Teste o MBS Fiscal por 3 dias e ative sua mensalidade quando estiver pronto' if mostrar_trial else 'Gerencie planos, clientes e assinaturas do MBS Fiscal'}</h1>
+        <p>{'Crie sua conta, baixe o sistema e use o plano escolhido por 3 dias grátis. Ao final do teste, o acesso fica bloqueado automaticamente caso a mensalidade ainda não esteja paga.' if mostrar_trial else 'Acompanhe a vitrine de planos, área do cliente, pagamentos e download do sistema pelo ambiente administrativo.'}</p>
         <div class="steps">
           <div class="step"><strong>1. Escolha o plano</strong><div class="small">O cliente começa pela página inicial e seleciona a oferta ideal para testar.</div></div>
-          <div class="step"><strong>2. Teste por 3 dias</strong><div class="small">Após o cadastro, a área premium e o desktop ficam liberados durante o período de avaliação.</div></div>
-          <div class="step"><strong>3. Mantenha ativo</strong><div class="small">Pague por PIX ou cartão para continuar usando depois que a contagem terminar.</div></div>
+          {('<div class="step"><strong>2. Teste por 3 dias</strong><div class="small">Após o cadastro, a área premium e o desktop ficam liberados durante o período de avaliação.</div></div>' if mostrar_trial else '<div class="step"><strong>2. Acompanhe clientes</strong><div class="small">O administrador monitora assinaturas, pagamentos e acessos pelo painel.</div></div>')}
+          {('<div class="step"><strong>3. Mantenha ativo</strong><div class="small">Pague por PIX ou cartão para continuar usando depois que a contagem terminar.</div></div>' if mostrar_trial else '<div class="step"><strong>3. Distribua o sistema</strong><div class="small">A área premium fica disponível para conferência e suporte administrativo.</div></div>')}
         </div>
       </div>
       <div class="hero-side">
@@ -477,15 +478,15 @@ def _render_home(request: Request, mensagem="", erro=""):
           <div class="meta-value">{escape(cliente.get('nome')) if cliente else 'Não autenticado'}</div>
         </div>
         <div class="meta-card">
-          <div class="meta-label">Teste grátis</div>
-          <div class="meta-value">3 dias liberados</div>
+          <div class="meta-label">{'Teste grátis' if mostrar_trial else 'Administração'}</div>
+          <div class="meta-value">{'3 dias liberados' if mostrar_trial else 'Painel liberado'}</div>
         </div>
       </div>
     </section>
     <section class="grid">
       <article class="card span-12">
         <h2 class="section-title">Planos disponíveis</h2>
-        <p class="subtitle">O cadastro libera 3 dias de avaliação. Depois disso, a licença do desktop só permanece ativa com pagamento confirmado.</p>
+        <p class="subtitle">{'O cadastro libera 3 dias de avaliação. Depois disso, a licença do desktop só permanece ativa com pagamento confirmado.' if mostrar_trial else 'Planos ativos para venda e gerenciamento pelo portal administrativo.'}</p>
         <div class="plans">{''.join(plan_cards)}</div>
       </article>
     </section>
@@ -496,13 +497,18 @@ def _render_home(request: Request, mensagem="", erro=""):
 def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
     cliente = _cliente_logado(request)
     admin = _admin_logado(request)
+    mostrar_trial = not admin
     planos = {plano["code"]: plano for plano in listar_planos_cobranca(apenas_ativos=True)}
     plano = planos.get(plano_code) if plano_code else None
     titulo = "Entrar na conta" if modo == "login" else "Criar conta"
     subtitulo = (
         "Entre com seu email para continuar a contratação do plano."
         if modo == "login"
-        else "Cadastre os dados do cliente para liberar 3 dias grátis de teste."
+        else (
+            "Cadastre os dados do cliente para liberar 3 dias grátis de teste."
+            if mostrar_trial
+            else "Cadastre os dados do cliente para seguir com a contratação."
+        )
     )
     plano_box = ""
     if plano:
@@ -510,7 +516,7 @@ def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
         <div class="checkout-option">
           <div class="badge info">Plano selecionado</div>
           <h3 style="margin:10px 0 6px;">{escape(plano.get('nome', 'Plano'))}</h3>
-          <div class="small">Teste grátis por 3 dias. Depois, {escape(_fmt_money(plano.get('valor_mensal', 0)))} por mês.</div>
+          <div class="small">{'Teste grátis por 3 dias. Depois, ' if mostrar_trial else ''}{escape(_fmt_money(plano.get('valor_mensal', 0)))} por mês.</div>
         </div>
         """
     admin_test_action = ""
@@ -576,7 +582,7 @@ def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
       </article>
       <article class="card span-5">
         <h2 class="section-title">Fluxo da contratacao</h2>
-        <div class="small">Escolha do plano → cadastro → 3 dias de teste → pagamento para manter ativo.</div>
+        <div class="small">{'Escolha do plano → cadastro → 3 dias de teste → pagamento para manter ativo.' if mostrar_trial else 'Escolha do plano → login ou cadastro → checkout → área do usuário.'}</div>
         <div style="margin-top:14px;">{plano_box}</div>
       </article>
     </section>
@@ -587,6 +593,7 @@ def _render_auth_page(request: Request, modo="login", plano_code="", erro=""):
 def _render_choose_plan(request: Request, plano_code="", mensagem="", erro=""):
     cliente = _cliente_logado(request)
     admin = _admin_logado(request)
+    mostrar_trial = not admin
     planos = {plano["code"]: plano for plano in listar_planos_cobranca(apenas_ativos=True)}
     plano = planos.get(plano_code)
     if not plano:
@@ -611,7 +618,7 @@ def _render_choose_plan(request: Request, plano_code="", mensagem="", erro=""):
       <article class="card span-7">
         <div class="badge info">Plano escolhido</div>
         <h1 style="font-size:34px;margin:12px 0 10px;">{escape(plano.get('nome', 'Plano'))}</h1>
-        <p class="subtitle">O cadastro libera 3 dias de teste grátis. Depois desse período, o sistema continua funcionando somente com a mensalidade paga.</p>
+        <p class="subtitle">{'O cadastro libera 3 dias de teste grátis. Depois desse período, o sistema continua funcionando somente com a mensalidade paga.' if mostrar_trial else 'Revise o plano escolhido e siga pelo fluxo de login, cadastro ou teste administrativo.'}</p>
         <div class="actions">
           {admin_test_action}
           <a class="button btn-primary" href="/login?plan={escape(plano_code)}">Já tenho login</a>
@@ -818,6 +825,7 @@ def _render_card_checkout(request: Request, cliente, checkout_id, erro=""):
 
 def _render_portal(request: Request, cliente, mensagem="", erro=""):
     admin = _admin_logado(request)
+    mostrar_trial = not admin
     assinatura = obter_assinatura_portal_ativa(cliente["id"], incluir_checkout=True)
     premium_liberado, _assinatura_premium = _cliente_premium(cliente)
     cobrancas = listar_cobrancas_portal_cliente(cliente["id"], limit=24)
@@ -849,7 +857,7 @@ def _render_portal(request: Request, cliente, mensagem="", erro=""):
             </div>
             """
         trial_action = ""
-        if status_assinatura == "trial":
+        if status_assinatura == "trial" and mostrar_trial:
             trial_action = f"""
             <div class="checkout-option" style="margin-top:14px;">
               <div class="small"><strong>{escape(trial_resumo)}</strong> Faça o pagamento antes do fim da avaliação para manter o desktop liberado sem interrupção.</div>
@@ -873,7 +881,7 @@ def _render_portal(request: Request, cliente, mensagem="", erro=""):
           <h3>{escape(assinatura.get('plano_nome', 'Plano'))}</h3>
           <div class="plan-price">{escape(_fmt_money(assinatura.get('valor_mensal', 0)))}</div>
           <div class="small">Próximo vencimento: {escape(assinatura.get('next_due_at') or 'Ainda não definido')}</div>
-          {f'<div class="small"><strong>{escape(trial_resumo)}</strong></div>' if trial_resumo else ''}
+          {f'<div class="small"><strong>{escape(trial_resumo)}</strong></div>' if trial_resumo and mostrar_trial else ''}
           <ul>{recursos}</ul>
           {pending_action}
           {trial_action}
@@ -979,7 +987,7 @@ def _render_premium(request: Request, cliente, assinatura, mensagem="", erro="",
         <div class="eyebrow">Área premium liberada</div>
         <h1>Seu MBS Fiscal está pronto para trabalhar por você</h1>
         <p>Parabéns, {escape(cliente.get('nome', ''))}. Você escolheu uma ferramenta feita para transformar emissão fiscal em rotina organizada: menos retrabalho, mais velocidade e uma operação muito mais previsível.</p>
-        {f'<p><strong>{escape(trial_resumo)}</strong> Para continuar depois do teste, mantenha a mensalidade ativa no portal.</p>' if trial_resumo else ''}
+        {f'<p><strong>{escape(trial_resumo)}</strong> Para continuar depois do teste, mantenha a mensalidade ativa no portal.</p>' if trial_resumo and not admin_access else ''}
         <div class="actions" style="margin-top:22px;">{download_action}</div>
       </div>
       <div class="download-card">
@@ -1280,7 +1288,7 @@ def portal_page(request: Request, msg: str = "", err: str = ""):
 def premium_page(request: Request, msg: str = "", err: str = ""):
     cliente = _cliente_logado(request)
     admin = _admin_logado(request)
-    if admin and not cliente:
+    if admin:
         assinatura = obter_assinatura_sistema() or {
             "status": "active",
             "plano_nome": "MBS Fiscal",
@@ -1326,10 +1334,12 @@ def premium_download(request: Request):
     admin = _admin_logado(request)
     if not cliente and not admin:
         return _redirect("/login?err=" + urlencode({"": "Faça login para baixar o sistema."})[1:])
-    if cliente:
+    if admin:
+        liberado = True
+    elif cliente:
         liberado, _assinatura = _cliente_premium(cliente)
     else:
-        liberado = bool(admin)
+        liberado = False
     if not liberado:
         return _redirect(
             "/portal?"

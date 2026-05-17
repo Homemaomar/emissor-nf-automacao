@@ -160,6 +160,8 @@ class EmissorApp(ctk.CTk):
     def _texto_licenca(self):
         assinatura = (self.usuario.get("licenca") or {}).get("assinatura") or {}
         status = str(assinatura.get("status") or "").strip().lower()
+        if usuario_e_gestor(self.usuario):
+            return "Licença administrativa"
         if status == "trial":
             restantes = assinatura.get("trial_days_remaining")
             if restantes is None:
