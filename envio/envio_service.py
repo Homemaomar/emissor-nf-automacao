@@ -126,77 +126,86 @@ class EnvioService:
         whatsapp = None
         if enviar_whatsapp and grupos_whatsapp:
             whatsapp = self.whatsapp_sender
-            whatsapp.iniciar()
+            try:
+                whatsapp.iniciar()
+            except Exception:
+                whatsapp.finalizar()
+                raise
 
-        for destino, notas_grupo in grupos_email.items():
-            linhas = [n.linha_excel for n in notas_grupo]
-            resultado = None
+        try:
+            for destino, notas_grupo in grupos_email.items():
+                linhas = [n.linha_excel for n in notas_grupo]
+                resultado = None
 
-            for tentativa in range(1, self.max_tentativas + 1):
-                self.log(f"Tentativa {tentativa}/{self.max_tentativas} para {destino}")
-                resultado = self.email_sender.enviar_email(destino, notas_grupo)
+                for tentativa in range(1, self.max_tentativas + 1):
+                    self.log(f"Tentativa {tentativa}/{self.max_tentativas} para {destino}")
+                    resultado = self.email_sender.enviar_email(destino, notas_grupo)
 
-                if resultado.sucesso:
+                    if resultado.sucesso:
+                        self.atualizador.atualizar_status_email(
+                            linhas_excel=linhas,
+                            status="ENVIADO",
+                            erro="",
+                            protocolo=resultado.protocolo,
+                        )
+                        break
+
+                    self.log(resultado.mensagem)
+
+                if resultado and not resultado.sucesso:
                     self.atualizador.atualizar_status_email(
+                        linhas_excel=linhas,
+                        status="ERRO",
+                        erro=resultado.mensagem,
+                        protocolo="",
+                    )
+
+                self._aplicar_limite()
+
+            for numero, notas_grupo in grupos_whatsapp.items():
+                linhas = [n.linha_excel for n in notas_grupo]
+
+                try:
+                    self.log(
+                        f"Enviando WhatsApp para {numero} com {len(notas_grupo)} nota(s)..."
+                    )
+
+                    mensagem = self._montar_mensagem_whatsapp(notas_grupo)
+
+                    sucesso_msg = whatsapp.enviar(numero, mensagem)
+                    if not sucesso_msg:
+                        raise Exception("Falha ao enviar mensagem inicial")
+
+                    time.sleep(2)
+
+                    arquivos = [n.caminho_pdf for n in notas_grupo if n.caminho_pdf]
+                    self.log(f"Enviando {len(arquivos)} arquivo(s) em lote")
+
+                    sucesso_arq = whatsapp.enviar_multiplos_arquivos(arquivos)
+                    if not sucesso_arq:
+                        raise Exception("Erro no envio em lote")
+
+                    self.atualizador.atualizar_status_whatsapp(
                         linhas_excel=linhas,
                         status="ENVIADO",
                         erro="",
-                        protocolo=resultado.protocolo,
+                        protocolo="WHATSAPP_OK",
                     )
-                    break
 
-                self.log(resultado.mensagem)
+                except Exception as exc:
+                    self.log(f"Erro ao enviar WhatsApp para {numero}: {exc}")
+                    self.atualizador.atualizar_status_whatsapp(
+                        linhas_excel=linhas,
+                        status="ERRO",
+                        erro=str(exc),
+                        protocolo="",
+                    )
 
-            if resultado and not resultado.sucesso:
-                self.atualizador.atualizar_status_email(
-                    linhas_excel=linhas,
-                    status="ERRO",
-                    erro=resultado.mensagem,
-                    protocolo="",
-                )
+                self._aplicar_limite()
 
-            self._aplicar_limite()
-
-        for numero, notas_grupo in grupos_whatsapp.items():
-            linhas = [n.linha_excel for n in notas_grupo]
-
-            try:
-                self.log(
-                    f"Enviando WhatsApp para {numero} com {len(notas_grupo)} nota(s)..."
-                )
-
-                mensagem = self._montar_mensagem_whatsapp(notas_grupo)
-
-                sucesso_msg = whatsapp.enviar(numero, mensagem)
-                if not sucesso_msg:
-                    raise Exception("Falha ao enviar mensagem inicial")
-
-                time.sleep(2)
-
-                arquivos = [n.caminho_pdf for n in notas_grupo if n.caminho_pdf]
-                self.log(f"Enviando {len(arquivos)} arquivo(s) em lote")
-
-                sucesso_arq = whatsapp.enviar_multiplos_arquivos(arquivos)
-                if not sucesso_arq:
-                    raise Exception("Erro no envio em lote")
-
-                self.atualizador.atualizar_status_whatsapp(
-                    linhas_excel=linhas,
-                    status="ENVIADO",
-                    erro="",
-                    protocolo="WHATSAPP_OK",
-                )
-
-            except Exception as exc:
-                self.log(f"Erro ao enviar WhatsApp para {numero}: {exc}")
-                self.atualizador.atualizar_status_whatsapp(
-                    linhas_excel=linhas,
-                    status="ERRO",
-                    erro=str(exc),
-                    protocolo="",
-                )
-
-            self._aplicar_limite()
+        finally:
+            if whatsapp:
+                whatsapp.finalizar()
 
         self.log("PROCESSAMENTO DE ENVIO FINALIZADO.")
 

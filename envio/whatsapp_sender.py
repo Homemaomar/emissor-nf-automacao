@@ -12,14 +12,34 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 class WhatsAppSender:
+    _driver_compartilhado = None
+
     def __init__(self, log_callback=None):
         self.log = log_callback or print
         self.driver = None
+
+    def _driver_ativo(self, driver):
+        if not driver:
+            return False
+        try:
+            driver.current_url
+            return True
+        except Exception:
+            return False
 
     # ==========================================
     # INICIAR WHATSAPP
     # ==========================================
     def iniciar(self):
+        if self._driver_ativo(self.driver):
+            self.log("WhatsApp Web ja esta aberto nesta execucao.")
+            return
+
+        if self._driver_ativo(WhatsAppSender._driver_compartilhado):
+            self.driver = WhatsAppSender._driver_compartilhado
+            self.log("Reutilizando WhatsApp Web ja aberto pela automacao.")
+            return
+
         profile_path = r"C:\WhatsAppProfile"
 
         if not os.path.exists(profile_path):
@@ -29,8 +49,11 @@ class WhatsAppSender:
         options.add_argument(f"--user-data-dir={profile_path}")
         options.add_argument("--profile-directory=Default")
         options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--no-first-run")
+        options.add_argument("--no-default-browser-check")
 
         self.driver = webdriver.Chrome(options=options)
+        WhatsAppSender._driver_compartilhado = self.driver
         self.driver.get("https://web.whatsapp.com")
 
         self.log("Abrindo WhatsApp Web...")
@@ -179,6 +202,10 @@ class WhatsAppSender:
                 self.driver.quit()
         except Exception as exc:
             self.log(f"Erro ao finalizar: {exc}")
+        finally:
+            if self.driver is WhatsAppSender._driver_compartilhado:
+                WhatsAppSender._driver_compartilhado = None
+            self.driver = None
 
     def _dividir_em_lotes(self, lista, tamanho_lote=10):
         for i in range(0, len(lista), tamanho_lote):

@@ -274,17 +274,17 @@ class EmissorApp(ctk.CTk):
                 sidebar,
                 text=text,
                 anchor="w",
-                height=46,
+                height=40,
                 fg_color=THEME["primary_soft"] if row == 1 else "transparent",
                 hover_color=THEME["surface_alt"],
                 text_color=THEME["text"] if row == 1 else THEME["text_muted"],
-                corner_radius=18,
+                corner_radius=16,
                 command=command,
                 border_width=1 if row == 1 else 0,
                 border_color=THEME["border_strong"] if row == 1 else THEME["sidebar_bg"],
-                font=("Segoe UI Semibold", 14, "bold") if row == 1 else ("Segoe UI", 14),
+                font=("Segoe UI Semibold", 13, "bold") if row == 1 else ("Segoe UI", 13),
             )
-            button.grid(row=row, column=0, sticky="ew", padx=24, pady=5)
+            button.grid(row=row, column=0, sticky="ew", padx=24, pady=2)
 
         insight = ctk.CTkFrame(
             sidebar,
@@ -293,14 +293,14 @@ class EmissorApp(ctk.CTk):
             border_width=1,
             border_color=THEME["border"],
         )
-        insight.grid(row=7, column=0, sticky="sew", padx=24, pady=(20, 28))
+        insight.grid(row=7, column=0, sticky="ew", padx=24, pady=(8, 8))
 
         ctk.CTkLabel(
             insight,
             text="Sessão ativa",
             font=("Segoe UI Semibold", 14, "bold"),
             text_color=THEME["text"],
-        ).pack(anchor="w", padx=16, pady=(16, 4))
+        ).pack(anchor="w", padx=16, pady=(14, 4))
 
         ctk.CTkLabel(
             insight,
@@ -346,12 +346,12 @@ class EmissorApp(ctk.CTk):
             font=("Segoe UI Semibold", 12, "bold"),
             text_color=THEME["primary"],
         )
-        self.label_recorrencia.pack(anchor="w", padx=16, pady=(0, 14))
+        self.label_recorrencia.pack(anchor="w", padx=16, pady=(0, 12))
 
         ctk.CTkButton(
-            insight,
+            sidebar,
             text="Sair",
-            height=38,
+            height=36,
             fg_color="transparent",
             hover_color="#26344c",
             text_color=THEME["text_muted"],
@@ -360,7 +360,7 @@ class EmissorApp(ctk.CTk):
             corner_radius=16,
             font=("Segoe UI Semibold", 13, "bold"),
             command=self.sair,
-        ).pack(fill="x", padx=16, pady=(0, 16))
+        ).grid(row=8, column=0, sticky="ew", padx=40, pady=(0, 16))
 
         return sidebar
 
